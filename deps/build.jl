@@ -1,2 +1,2 @@
-Pkg.add("Dates")
-Pkg.add("SchumakerSpline")
+add Dates
+add SchumakerSpline
