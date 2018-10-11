@@ -44,3 +44,50 @@ It also supports the following spline (which can also be used for interpolation)
 
 * Implement more useful splines and interpolation schemes.
 * Get the constructor of sum_of_functions to amalgamate PE_Functions with the same b_, base_ and d_ values. This may involve some base changes in order to get them to match.
+
+# Examples
+
+## For basic algebra:
+
+Consider we have a two functions f and g and want to add them, multiply them by some other function h, then square it and finally integrate the result between 2.0 and 2.8. This can be done analytically with UnivariateFunctions:
+```
+f = PE_Function(1.0, 2.0, 4.0, 5)
+g = PE_Function(1.3, 2.0, 4.3, 2)
+h = PE_Function(5.0, 2.2, 1.0,0)
+result_of_operations = (h*(f+g))^2
+evaluate_integral(result_of_operations, 2.0, 2.8)
+```
+
+## For data interpolation
+
+Suppose we have want to approximate some function with some sampled points. First to generate some points
+```
+using UnivariateFunctions
+const global_base_date = Date(2000,1,1)
+StartDate = Date(2018, 7, 21)
+x = Array{Date}(undef, 1000)
+for i in 1:1000
+    x[i] = StartDate +Dates.Day(2* (i-1))
+end
+function ff(x::Date)
+    days_between = years_from_global_base(x)
+    return log(days_between) + sqrt(days_between)
+end
+y = ff.(x)
+```
+Now we can generate a UnivariateFunction that can be used to easily interpolate from the sampled points:
+```
+func = create_quadratic_spline(x,y)
+```
+And we can evaluate from this function and integrate it and differentiate it in the normal way:
+```
+evaluate(func, Date(2020,1,1))
+evaluate.(Ref(func), [Date(2020,1,1), Date(2021,1,2)])
+evaluate(derivative(func), Date(2021,1,2))
+evaluate_integral(func, Date(2020,1,1), Date(2021,1,2))
+```
+If we had wanted to interpolate instead with a constant method(from left or from right) or by linearly
+interpolating then we could have just generated func with a different method:
+create_constant_interpolation_to_left,
+create_constant_interpolation_to_right or
+create_linear_interpolation.
