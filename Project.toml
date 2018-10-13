@@ -1,0 +1,8 @@
+authors = ["Stuart Baumann <stuart@stuartbaumann.com>"]
+name = "UnivariateFunctions"
+uuid = "d9a36d10-ceec-11e8-23b7-9d1fcba65c64"
+version = "0.1.0"
+
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
