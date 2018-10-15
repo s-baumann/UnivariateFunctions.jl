@@ -13,10 +13,10 @@ export UnivariateFunction, Undefined_Function, PE_Function, Sum_Of_Functions, Pi
 export change_base_of_PE_Function, trim_piecewise_function
 
 # These all implement evaluation, calculus and operators for the main structs.
-include("1_Undefined_Function.jl")
-include("2_PE_Functions.jl")
-include("3_Sum_Of_Functions.jl")
-include("4_Piecewise_Functions.jl")
+include("1_undefined_function.jl")
+include("2_pe_functions.jl")
+include("3_sum_of_functions.jl")
+include("4_piecewise_functions.jl")
 export evaluate, derivative, indefinite_integral
 
 include("5_calculus.jl")
