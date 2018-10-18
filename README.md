@@ -1,6 +1,7 @@
 # UnivariateFunctions.jl
 
-The build status is https://travis-ci.com/s-baumann/UnivariateFunctions.jl.svg?branch=master
+[![Build Status](https://travis-ci.com/s-baumann/UnivariateFunctions.jl.svg?branch=master)](https://travis-ci.org/s-baumann/UnivariateFunctions.jl)
+
 
 This implements single algebra and evaluation on simple univariate functions.
 There are a few ways in which it can be used.
