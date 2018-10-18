@@ -1,6 +1,6 @@
-authors = ["Stuart Baumann <stuart@stuartbaumann.com>"]
 name = "UnivariateFunctions"
 uuid = "d9a36d10-ceec-11e8-23b7-9d1fcba65c64"
+authors = ["Stuart Baumann <stuart@stuartbaumann.com>"]
 version = "0.1.0"
 
 [deps]
