@@ -1,7 +1,7 @@
 name = "UnivariateFunctions"
 uuid = "d9a36d10-ceec-11e8-23b7-9d1fcba65c64"
 authors = ["Stuart Baumann <stuart@stuartbaumann.com>"]
-version = "0.0.1"
+version = "0.0.2"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
