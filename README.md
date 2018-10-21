@@ -4,7 +4,7 @@
 
 This implements single algebra and evaluation on simple univariate functions.
 There are a few ways in which it can be used.
-* As in the [![StochasticIntegrals.jl](StochasticIntegrals.jl)](https://github.com/s-baumann/StochasticIntegrals.jl) package this package can be used to define
+* As in the [StochasticIntegrals.jl](https://github.com/s-baumann/StochasticIntegrals.jl) package this package can be used to define
     functions that will be the integrands in stochastic integrals. This has the benefit
     that the means, variances & covariances implied by these stochastic integrals can be found analytically.
 * UnivariateFunctions can be used in the creation of splines. This has the added
