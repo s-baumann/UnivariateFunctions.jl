@@ -2,12 +2,11 @@
 
 [![Build Status](https://travis-ci.com/s-baumann/UnivariateFunctions.jl.svg?branch=master)](https://travis-ci.org/s-baumann/UnivariateFunctions.jl)
 
-
 This implements single algebra and evaluation on simple univariate functions.
 There are a few ways in which it can be used.
-* As in the StochasticIntegrals.jl package this package can be used to define
-    functions that will be the integrands in stochastic integrals. This has the beneft
-    that the mean and variances implied by these stochastic integrals can be found analytically.
+* As in the [![Link to Stochastic Integrals package](StochasticIntegrals.jl)](https://github.com/s-baumann/StochasticIntegrals.jl) package this package can be used to define
+    functions that will be the integrands in stochastic integrals. This has the benefit
+    that the means, variances & covariances implied by these stochastic integrals can be found analytically.
 * UnivariateFunctions can be used in the creation of splines. This has the added
     advantage that a spline implemented as a UnivariateFunction can be manipulated
     easily. It can be differentiated and then added to another function, etc.
@@ -18,10 +17,8 @@ There are a few ways in which it can be used.
 There are four main UnivariateFunction structs that are part of this package. These are:
 * Undefined_Function - An undefined function behaves similarly to "missing" in Julia. Whenever anything is added/multiplied/etc with an undefined function the result is undefined. The integral and derivative of an undefined function is undefined. If an undefined function is evaluated it will throw an error.
 * PE_Function - This is the basic function type. It has a form of $a \exp(b(x-base_)) (x-base)^d$.
-* Sum_Of_Functions - This is an array of PE_Functions. Note that by adding PE_Functions we can replicate any given polynomial. Hence from Weierstrass' approximation theorem we can approximate any continuous function on a bounded domain to any desired level of accuracy.[^1]
+* Sum_Of_Functions - This is an array of PE_Functions. Note that by adding PE_Functions we can replicate any given polynomial. Hence from Weierstrass' approximation theorem we can approximate any continuous function on a bounded domain to any desired level of accuracy (whether this is practical in numerical computing depends on the function being approximated).
 * Piecewise_Function - This defines a different UnivariateFunction for each part of the x domain.
-
-1: The degree to which this is numerically practical will depend on the function in question. Note however that it is possible to use a Piecewise_Function to define a different polynomial for each part of the x domain. PE_Function also contains an exponential term. With these features it should be possible to approximate the majority of functions fairly well.
 
 It is possible to perform any additions, subtractions, multiplications between any two UnivariateFunctions and between Ints/Floats and any UnivariateFunction. No division is allowed and it is not possible to raise a UnivariateFunction to a negative power. This is to ensure that all univariatefunctions are analytically integrable and differentiable. This may change in future releases.
 
@@ -41,12 +38,12 @@ It also supports the following spline (which can also be used for interpolation)
 
 ## Date Handling
 
-* All base dates are immediately converted to floats and are not otherwise saved. Thus there is no difference between a PE_Function created with a base as a float and one created with the matching date. This is done to simplify the code. All date conversions is done by finding the year fractions between the date and the global base date of Date(2000,1,1). This particular global base date should not affect anything as long as it is consistent. It is relatively trivial to change it (in the helpers.jl file) and recompile however if desired.
+* All base dates are immediately converted to floats and are not otherwise saved. Thus there is no difference between a PE_Function created with a base as a float and one created with the matching date. This is done to simplify the code. All date conversions is done by finding the year fractions between the date and the global base date of Date(2000,1,1). This particular global base date should not affect anything as long as it is consistent. It is relatively trivial to change it (in the date_conversions.jl file) and recompile however if desired.
 
 ## TODO (help wanted if anyone feels keen)
 
 * Implement more useful splines and interpolation schemes.
-* Get the constructor of sum_of_functions to amalgamate PE_Functions with the same b_, base_ and d_ values. This may involve some base changes in order to get them to match.
+* Get the constructor of Sum_Of_Functions to amalgamate PE_Functions with the same b_, base_ and d_ values. This should be more efficient in terms of memory as well as computation. This may involve some base changes in order to get them to match.
 
 # Examples
 

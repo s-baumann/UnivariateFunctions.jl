@@ -4,7 +4,7 @@ using Dates
 using SchumakerSpline: Schumaker
 
 # This includes timing functions for use of UnivariateFunctions with dates.
-include("helpers.jl")
+include("date_conversions.jl")
 export years_between, years_from_global_base
 # The abstrat type UnivariateFunction and all structs are implemented here.
 # In addition we have operator reversals and some supporting functions.
