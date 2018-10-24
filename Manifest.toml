@@ -37,9 +37,9 @@ uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[SchumakerSpline]]
 deps = ["Dates", "Test"]
-git-tree-sha1 = "a4a892375bebc4219804ff9f1a7a954079c41796"
+git-tree-sha1 = "282d4c0926665a00d46451bf78d43f42041c3648"
 uuid = "65e68595-3a03-5ff5-a6a2-f05fa774f32e"
-version = "1.0.3"
+version = "1.0.4"
 
 [[Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
