@@ -140,7 +140,7 @@ function take_piecewise_slice(starts::Array{Float64}, functions::Array, from::Fl
     return starts[from_i:to_i], functions[from_i:to_i]
 end
 
-function clean_array_of_functions(funcs)
+function clean_array_of_functions(funcs::Array)
     undefined_funcs  = funcs[typeof.(funcs) .== UnivariateFunctions.Undefined_Function  ]
     piecewise_funcs  = funcs[typeof.(funcs) .== UnivariateFunctions.Piecewise_Function  ]
     if length(undefined_funcs) > 0

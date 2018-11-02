@@ -10,16 +10,6 @@ function indefinite_integral(f::Undefined_Function)
     return f
 end
 
-function max(f::UnivariateFunction, f2::Undefined_Function)
-    return f2
-end
-function min(f::Undefined_Function, f2::UnivariateFunction)
-    return f
-end
-function min(f::UnivariateFunction, f2::Undefined_Function)
-    return f2
-end
-
 function +(f::Undefined_Function, number::Float64)
     return f
 end

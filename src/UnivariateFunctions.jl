@@ -2,6 +2,7 @@ module UnivariateFunctions
 
 using Dates
 using SchumakerSpline: Schumaker
+using GLM
 
 # This includes timing functions for use of UnivariateFunctions with dates.
 include("date_conversions.jl")
@@ -25,6 +26,9 @@ export  evaluate_integral, right_integral, left_integral
 include("6_splines_and_interpolation.jl")
 export create_quadratic_spline, create_constant_interpolation_to_right
 export create_constant_interpolation_to_left, create_linear_interpolation
+
+include("7_regressions_and_approximation.jl")
+export create_ols_approximation
 
 # The following operators also have overloads
 export +, -, *, /, ^, min, max
