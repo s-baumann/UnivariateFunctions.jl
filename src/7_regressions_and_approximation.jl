@@ -1,19 +1,21 @@
 function create_ols_approximation(y::Array{Float64}, x::Array{Float64}, base_x::Float64 = 0.0, degree::Int = 1, intercept::Bool = true)
-    obs = length(x)
-    if length(y) != obs
-        error("The number of observations is different in y and x")
-    end
+    obs = length(y)
     if degree < 0
         error("Cannot approximate with OLS with a degree that is negative")
     end
     x = x .- base_x
-    X = deepcopy(x)
-    for i in 2:degree
-        X = hcat(X, (x .^ i))
-    end
     if intercept
-        X = hcat(ones(obs), X)
+        X = ones(obs)
+        for i in 1:degree
+            X = hcat(X, (x .^ i))
+        end
+    else
+        X = x
+        for i in 2:degree
+            X = hcat(X, (x .^ i))
+        end
     end
+
     lm1 = fit(LinearModel,  hcat(X), y)
     beta = lm1.pp.beta0
     func_array = Array{PE_Function}(undef,convert(Int, intercept) + degree)
