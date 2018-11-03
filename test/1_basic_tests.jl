@@ -122,7 +122,7 @@ test_result( f1 * f3 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result * f
 test_result( f1 * PE_Function(1.0,2.0,3.0,4) , UnivariateFunctions.PE_Function, (f1_test_result * f1_test_result), 1 )
 test_result( f1 * sum4 , UnivariateFunctions.Sum_Of_Functions, f1_test_result * (f1_test_result + f3_test_result), 11 )
 test_result( sum4 * f1 , UnivariateFunctions.Sum_Of_Functions, f1_test_result * (f1_test_result + f3_test_result), 11 )
-test_result( sum4 * sum4 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result)^2, 21 )
+test_result( sum4 * sum4 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result)^2, 12 )
 
 ### Powers pe
 test_result( f1 ^ 0 , UnivariateFunctions.PE_Function, 1.0 )
@@ -133,7 +133,7 @@ abs(evaluate(f1 ^ 4 ,5.0) - (f1_test_result * f1_test_result * f1_test_result * 
 ### Powers sums
 test_result( sum4 ^ 0 , UnivariateFunctions.PE_Function, 1.0 )
 test_result( sum4 ^ 1 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result), 3 )
-test_result( sum4 ^ 2 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result)^2, 21 )
+test_result( sum4 ^ 2 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result)^2, 12 )
 # Higher powers give an underflow problem with base changes.
 
 
@@ -146,7 +146,7 @@ pe_exp_quad = PE_Function(2.0,2.0,2.0,2)
 
 # Linear gradient constant
 abs(evaluate(derivative(pe_lin),5.0) - evaluate(derivative(pe_lin),1.0) ) < tol
-typeof(derivative(pe_lin)) == UnivariateFunctions.PE_Function
+typeof(derivative(pe_lin)) == UnivariateFunctions.Sum_Of_Functions
 # This is also linear
 abs(evaluate(derivative(derivative(pe_quad)),5.0) -evaluate(derivative(derivative(pe_quad)),9.0) ) < tol
 # derivative into a sum of functions
