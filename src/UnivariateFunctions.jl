@@ -11,7 +11,7 @@ export years_between, years_from_global_base
 # In addition we have operator reversals and some supporting functions.
 include("0_structs_and_generic_reversals.jl")
 export UnivariateFunction, Undefined_Function, PE_Function, Sum_Of_Functions, Piecewise_Function
-export change_base_of_PE_Function, trim_piecewise_function
+export change_base_of_PE_Function, trim_piecewise_function, sort
 
 # These all implement evaluation, calculus and operators for the main structs.
 include("1_undefined_function.jl")
@@ -23,6 +23,9 @@ export evaluate, derivative, indefinite_integral
 include("5_calculus.jl")
 export  evaluate_integral, right_integral, left_integral
 
+include("chebyshevs.jl")
+export get_chevyshevs_up_to, get_chebyshevs
+
 include("6_splines_and_interpolation.jl")
 export create_quadratic_spline, create_constant_interpolation_to_right
 export create_constant_interpolation_to_left, create_linear_interpolation
@@ -31,7 +34,7 @@ include("7_regressions_and_approximation.jl")
 export create_ols_approximation
 
 # The following operators also have overloads
-export +, -, *, /, ^, min, max
+export +, -, *, /, ^, sort
 end
 
 # In terms of UnivariateFunction types we have the following seniority:

@@ -33,3 +33,26 @@ function create_ols_approximation(y::Array{Float64}, x::Array{Date}, base_x::Dat
     xx   = years_from_global_base.(x)
     return create_ols_approximation(y, xx, base, degree, intercept)
 end
+
+
+func = tan
+nodes = 3
+left = 2.9
+right = 3.8
+
+function get_cholesky_coefficients(chebyshev::Sum_Of_Functions, y::Array{Float64}, normalised_nodes::Array{Float64})
+    chebyshev_on_nodes = evaluate.(Ref(chebyshev), normalised_nodes)
+    a = sum(y .* chebyshev_on_nodes) ./ sum(chebyshev_on_nodes .^2)
+end
+
+
+function create_chebyshev_approximation(func::Function, nodes::Int, degree::Int, left::Float64, right::Float64)
+    # This is all after Algorithm 6.2 from Judd (1998) Numerical Methods in Economics.
+    k = 1:nodes
+    unnormalised_nodes = -cos.( (((2 .* k) .- 1) ./ (2 * nodes)) .* pi    )
+    normalised_nodes = (unnormalised_nodes .+ 1) .* ((right-left)/2) .+ left
+    y = func.(normalised_nodes)
+    chebyshevs = get_chevyshevs_up_to(degree, true)
+    a = get_cholesky_coefficients.(chebyshevs, Ref(y), Ref(normalised_nodes))
+
+end

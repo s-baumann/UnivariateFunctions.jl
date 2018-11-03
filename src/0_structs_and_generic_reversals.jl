@@ -1,4 +1,5 @@
 import Base.+, Base.-, Base./, Base.*, Base.^
+import Base.sort
 
 abstract type UnivariateFunction end
 
@@ -32,6 +33,9 @@ end
 Base.broadcastable(e::PE_Function) = Ref(e)
 struct Sum_Of_Functions <: UnivariateFunction
     functions_::Array{PE_Function,1}
+    function Sum_Of_Functions(funcs::Sum_Of_Functions)
+        return funcs
+    end
     function Sum_Of_Functions(funcs)
         undefined_funcs  = funcs[typeof.(funcs) .== UnivariateFunctions.Undefined_Function  ]
         if length(undefined_funcs) > 0
@@ -75,8 +79,11 @@ struct Piecewise_Function <: UnivariateFunction
 end
 Base.broadcastable(e::Piecewise_Function) = Ref(e)
 
-function is_constant_function(func::PE_Function)
-   return (abs(func.b_) < tol) & (func.d_ == 0)
+function sort(funcs::Array{PE_Function,1})
+    len = length(funcs)
+    attributes = hcat(map(f -> f.d_, funcs), map(f -> f.base_, funcs), map(f -> f.b_, funcs) )
+    ordering = convert(Array{Int}, sortslices(hcat(attributes, 1:len) , dims = 1)[:,4])
+    return funcs[ordering]
 end
 
 function trim_piecewise_function(func::Piecewise_Function, left_limit::Float64, right_limit::Float64)
@@ -140,6 +147,36 @@ function take_piecewise_slice(starts::Array{Float64}, functions::Array, from::Fl
     return starts[from_i:to_i], functions[from_i:to_i]
 end
 
+function find(a::BitArray)
+    len = length(a)
+    indices = Array{Int,1}()
+    for i in 1:len
+        if a[i]
+            append!(indices, i)
+        end
+    end
+    return indices
+end
+
+function rationalise_array_of_functions(funcs::Array{PE_Function,1})
+    len = length(funcs)
+    if len < 2
+        return funcs
+    end
+    attributes = hcat(map(f -> f.b_, funcs), map(f -> f.base_, funcs), map(f -> f.d_, funcs) )
+    multipliers = map(f -> f.a_, funcs)
+    unique_attributes = unique(attributes, dims = 1)
+    new_len = size(unique_attributes)[1]
+    new_funcs = Array{PE_Function,1}(undef,new_len)
+    for i in 1:new_len
+        atts =  transpose(unique_attributes[i,:])
+        which_multipliers = all(attributes .== atts, dims=2)
+        multiplier = sum(multipliers[find(which_multipliers)])
+        new_funcs[i] = PE_Function(multiplier, atts[1], atts[2], convert(Int, atts[3]))
+    end
+    return new_funcs
+end
+
 function clean_array_of_functions(funcs::Array)
     undefined_funcs  = funcs[typeof.(funcs) .== UnivariateFunctions.Undefined_Function  ]
     piecewise_funcs  = funcs[typeof.(funcs) .== UnivariateFunctions.Piecewise_Function  ]
@@ -159,13 +196,8 @@ function clean_array_of_functions(funcs::Array)
     if length(pe_funcs) == 0
         return [PE_Function(0.0,0.0,0.0,0)]
     end
-    constant_functions = pe_funcs[is_constant_function.(pe_funcs)]
-    if length(constant_functions) == 0
-        return pe_funcs
-    end
-    aggregate_func = PE_Function(sum(map(f -> f.a_, constant_functions)), 0.0, 0.0, 0)
-    other_funcs    = pe_funcs[.!is_constant_function.(pe_funcs)]
-    return vcat(aggregate_func, other_funcs)
+    simplified_functions = rationalise_array_of_functions(convert(Array{PE_Function,1}, pe_funcs))
+    return simplified_functions
 end
 
 
