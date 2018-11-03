@@ -29,12 +29,8 @@ function indefinite_integral(f::PE_Function)
 end
 
 function +(f::PE_Function,number::Float64)
-    if is_constant_function(f)
-        return PE_Function(f.a_ + number, 0.0,0.0,0)
-    else
     constant_function = PE_Function(number, 0.0,0.0,0)
     return Sum_Of_Functions([f, constant_function])
-    end
 end
 function -(f::PE_Function, number::Float64)
     return +(f, -number)
@@ -64,9 +60,6 @@ function /(f::PE_Function, number::Integer)
 end
 
 function +(f1::PE_Function, f2::PE_Function)
-    if is_constant_function(f1) & is_constant_function(f2)
-        return PE_Function(f1.a_ + f2.a_, 0.0, 0.0, 0)
-    end
     return Sum_Of_Functions([f1,f2])
 end
 function +(f1::PE_Function, f2::Sum_Of_Functions)
