@@ -1,7 +1,7 @@
 import Base.+, Base.-, Base./, Base.*, Base.^
 
 function evaluate(f::Undefined_Function, point::Float64)
-    error("Evaluation of an undefined function is not permitted.")
+    missing
 end
 function derivative(f::Undefined_Function)
     return f

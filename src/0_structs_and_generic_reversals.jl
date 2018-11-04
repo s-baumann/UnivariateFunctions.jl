@@ -240,6 +240,11 @@ function evaluate(f::UnivariateFunction, d::Date)
     return evaluate(f, date_in_relation_to_global_base)
 end
 
+function evaluate(f::UnivariateFunction, d::Int)
+    d_as_float = convert(Float64,d)
+    return evaluate(f, d_as_float)
+end
+
 function ^(f1::UnivariateFunction,num::Integer) # This will get overridden for undefined and zeros.
     if num < 0
         error("Cannot raise any univariate function to a negative power")
@@ -284,4 +289,27 @@ function change_base_of_PE_Function(f::PE_Function, new_base::Float64)
         end
         return Sum_Of_Functions(funcs)
     end
+end
+
+# Conversions for linearly rescaling inputs.
+function convert_to_linearly_rescale_inputs(f::Undefined_Function, alpha::Float64, beta::Float64)
+    return f
+end
+function convert_to_linearly_rescale_inputs(f::PE_Function, alpha::Float64, beta::Float64)
+    # We want the change the function so that whenever we put in x it is like we put in alpha x + beta.
+    beta = beta / alpha
+    alpha = 1.0/alpha
+    new_base_ = (f.base_ + beta)/alpha
+    new_multiplier = f.a_ * alpha^(f.d_)
+    new_power_ = f.b_ * alpha
+    return PE_Function(new_multiplier, new_power_, new_base_, f.d_)
+end
+function convert_to_linearly_rescale_inputs(f::Sum_Of_Functions, alpha::Float64, beta::Float64)
+    funcs = convert_to_linearly_rescale_inputs.(f.functions_, alpha,beta)
+    return Sum_Of_Functions(funcs)
+end
+function convert_to_linearly_rescale_inputs(f::Piecewise_Function, alpha::Float64, beta::Float64)
+    new_starts_ = (f.starts_ .* alpha) .+ beta
+    funcs_ = convert_to_linearly_rescale_inputs.(f.functions_, alpha,beta)
+    return Piecewise_Function(new_starts_, funcs_)
 end

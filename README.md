@@ -10,12 +10,13 @@ There are a few ways in which it can be used.
 * UnivariateFunctions can be used in the creation of splines. This has the added
     advantage that a spline implemented as a UnivariateFunction can be manipulated
     easily. It can be differentiated and then added to another function, etc.
-* Any continuous interpolation scheme can be accomplished with the added benefit that derivatives/integrals/products etc can be found analytically.
+* Any continuous interpolation scheme can be done with the added benefit that derivatives/integrals/products etc can be found analytically.
+* Basic approximation schemes like OLS regression and chebyshev polynomials can be done with the added benefit that derivatives/integrals/products etc can be found analytically.
 
 ## Structs
 
 There are four main UnivariateFunction structs that are part of this package. These are:
-* Undefined_Function - An undefined function behaves similarly to "missing" in Julia. Whenever anything is added/multiplied/etc with an undefined function the result is undefined. The integral and derivative of an undefined function is undefined. If an undefined function is evaluated it will throw an error.
+* Undefined_Function - An undefined function behaves similarly to "missing" in Julia. Whenever anything is added/multiplied/etc with an undefined function the result is undefined. The integral and derivative of an undefined function is undefined. If an undefined function is evaluated it will return a missing.
 * PE_Function - This is the basic function type. It has a form of $a \exp(b(x-base_)) (x-base)^d$.
 * Sum_Of_Functions - This is an array of PE_Functions. Note that by adding PE_Functions we can replicate any given polynomial. Hence from Weierstrass' approximation theorem we can approximate any continuous function on a bounded domain to any desired level of accuracy (whether this is practical in numerical computing depends on the function being approximated).
 * Piecewise_Function - This defines a different UnivariateFunction for each part of the x domain.
@@ -36,14 +37,16 @@ So far this package support the following interpolation schemes:
 It also supports the following spline (which can also be used for interpolation)
 * Schumaker shape preserving spline - Such a Piecewise_Function spline can be constructed by the create_quadratic_spline method.
 
+## Approximation and regression
+So for this package supports the creation of the following approximation schemes:
+* OLS regression. The create_ols_approximation function can create a UnivariateFunction approximating a linear relationship. The degree input to this function can be used to specify the number of higher powers of x to be used in approximating y. For instance if the degree is two then y will be approximated as a linear combination of x and x^2 as well as an intercept (if the intercept boolean is true).
+* Chebyshev polynomials - This will approximate a function using the Chebyshev basis functions. This approximation function can then be integreted which accomplished Chebyshev–Gauss quadrature.
+
+
+
 ## Date Handling
 
 * All base dates are immediately converted to floats and are not otherwise saved. Thus there is no difference between a PE_Function created with a base as a float and one created with the matching date. This is done to simplify the code. All date conversions is done by finding the year fractions between the date and the global base date of Date(2000,1,1). This particular global base date should not affect anything as long as it is consistent. It is relatively trivial to change it (in the date_conversions.jl file) and recompile however if desired.
-
-## TODO (help wanted if anyone feels keen)
-
-* Implement more useful splines and interpolation schemes.
-* Get the constructor of Sum_Of_Functions to amalgamate PE_Functions with the same b_, base_ and d_ values. This should be more efficient in terms of memory as well as computation. This may involve some base changes in order to get them to match.
 
 # Examples
 
@@ -91,3 +94,23 @@ interpolating then we could have just generated func with a different method:
 create_constant_interpolation_to_left,
 create_constant_interpolation_to_right or
 create_linear_interpolation.
+
+If we have lots of data that we want to summarise with OLS
+```
+# Generating example data
+using Random
+Random.seed!(1)
+obs = 1000
+X = rand(obs)
+y = X .+ rand(Normal(),obs) .+ 7
+# And now making an approximation function
+approxFunction = create_ols_approximation(y, X, 0.0, 2, true)
+```
+And if we want to approximate the sin function in the [2.3, 5.6] bound with 7 polynomial terms and 20 approximation nodes:
+```
+chebyshevs = create_chebyshev_approximation(sin, 20, 7, 2.3, 5.6)
+```
+We can integrate the above term in the normal way to achieve Gauss-Chebyshev quadrature:
+```
+evaluate_integral(chebyshevs, 2.3, 5.6)
+```

@@ -170,3 +170,19 @@ l_int = left_integral(pe_exp_quad, 0.2)
 (evaluate(l_int, 3.8) - evaluate_integral(pe_exp_quad,0.2,3.8)) < tol
 r_int = right_integral(pe_exp_quad, 3.8)
 (evaluate(r_int, 0.2) - evaluate_integral(pe_exp_quad,0.2,3.8)) < tol
+
+## Testing linear rescaling
+# For PE_Functions
+test_func = PE_Function(0.5,1.2,0.9,2)
+inp = 4.0
+alpha = 0.435
+beta = -1.52
+rescaled_input = alpha*inp + beta
+converted_test_func = convert_to_linearly_rescale_inputs(test_func, alpha, beta)
+abs(evaluate(test_func, inp) - evaluate(converted_test_func, rescaled_input)) < 1e-10
+# For undefined.
+typeof(convert_to_linearly_rescale_inputs(Undefined_Function(), alpha, beta)) == UnivariateFunctions.Undefined_Function
+# SumOfFunctions
+sumFunc = test_func + pe_exp_quad + pe_exp
+converted_sumFunc = convert_to_linearly_rescale_inputs(sumFunc, alpha, beta)
+abs(evaluate(sumFunc, inp) - evaluate(converted_sumFunc, rescaled_input)) < 1e-10

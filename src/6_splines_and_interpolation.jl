@@ -1,14 +1,14 @@
-function create_quadratic_spline(x::Array{Date},y::Array{Float64} ; gradients::Array{Any} = [], extrapolation::String = "Curve")
+function create_quadratic_spline(x::Array{Date,1},y::Array{Float64,1} ; gradients::Array{Any,1} = [], extrapolation::String = "Curve")
     x_as_Float64s = years_from_global_base.(x)
     return create_quadratic_spline(x_as_Float64s, y; gradients = gradients, extrapolation = extrapolation)
 end
 
-function create_quadratic_spline(x::Array{Int},y::Array{Float64} ; gradients::Array{Any} = [], extrapolation::String = "Curve")
+function create_quadratic_spline(x::Array{Int,1},y::Array{Float64,1} ; gradients::Array{Any,1} = [], extrapolation::String = "Curve")
     x_as_Float64s = convert.(Float64, x)
     return create_quadratic_spline(x_as_Float64s, y; gradients = gradients, extrapolation = extrapolation)
 end
 
-function create_quadratic_spline(x::Array{Float64},y::Array{Float64} ; gradients::Array{Any} = [], extrapolation::String = "Curve")
+function create_quadratic_spline(x::Array{Float64,1},y::Array{Float64,1} ; gradients::Array{Any,1} = [], extrapolation::String = "Curve")
     schum = Schumaker(x, y; gradients = gradients, extrapolation = extrapolation)
     return create_quadratic_spline(schum)
 end
@@ -28,35 +28,35 @@ function create_quadratic_spline(schum::Schumaker)
     return Piecewise_Function(starts_, funcs_)
 end
 
-function create_constant_interpolation_to_right(x::Array{Date},y::Array{Float64})
+function create_constant_interpolation_to_right(x::Array{Date,1},y::Array{Float64,1})
     x_Float = years_from_global_base.(x)
     return create_constant_interpolation_to_right(x_Float,y)
 end
 
-function create_constant_interpolation_to_right(x::Array{Float64},y::Array{Float64})
+function create_constant_interpolation_to_right(x::Array{Float64,1},y::Array{Float64,1})
     x_ = vcat(-Inf,x)
     y = vcat(y[1], y)
     funcs_ = PE_Function.(y,0.0,0.0,0)
     return Piecewise_Function(x_, funcs_)
 end
 
-function create_constant_interpolation_to_left(x::Array{Date},y::Array{Float64})
+function create_constant_interpolation_to_left(x::Array{Date,1},y::Array{Float64,1})
     x_Float = years_from_global_base.(x)
     return create_constant_interpolation_to_left(x_Float,y)
 end
 
-function create_constant_interpolation_to_left(x::Array{Float64},y::Array{Float64})
+function create_constant_interpolation_to_left(x::Array{Float64,1},y::Array{Float64,1})
     x_ = vcat(-Inf,x[1:(length(x)-1)])
     funcs_ = PE_Function.(y,0.0,0.0,0)
     return Piecewise_Function(x_, funcs_)
 end
 
-function create_linear_interpolation(x::Array{Date},y::Array{Float64})
+function create_linear_interpolation(x::Array{Date,1},y::Array{Float64,1})
     x_Float = years_from_global_base.(x)
     return create_linear_interpolation(x_Float,y)
 end
 
-function create_linear_interpolation(x::Array{Float64},y::Array{Float64})
+function create_linear_interpolation(x::Array{Float64,1},y::Array{Float64,1})
     len = length(x)
     if len < 2
         error("Insufficient data to linearly interpolate")

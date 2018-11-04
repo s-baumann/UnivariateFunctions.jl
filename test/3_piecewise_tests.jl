@@ -1,7 +1,4 @@
-using UnivariateFunctions: evaluate, years_between, PE_Function, Sum_Of_Functions
-using UnivariateFunctions: change_base_of_PE_Function, derivative, indefinite_integral
-using UnivariateFunctions: Piecewise_Function, right_integral, left_integral, evaluate_integral
-using UnivariateFunctions: UnivariateFunction, Undefined_Function
+using UnivariateFunctions
 
 tol = 10*eps()
 
@@ -105,3 +102,14 @@ test_result(last_ * f1, 0.0, 252500.0, 4)
 test_result(f1 + f4, 0.0, 1000.0, 8)
 test_result(f1 - f4, 0.0, 0.0, 8)
 test_result(f1 * f4, 0.0, 250000.0, 8)
+
+# Testing linear rescaling
+#test function will be f4
+alpha = 0.95
+beta = 3.0
+X = [-0.3, 0.0, 1.3, 1.5, 4.0, 7.0, 20.0, 40.0, 70.0, 100.0]
+X_converted = (alpha .* X) .+ beta
+f4_converted = convert_to_linearly_rescale_inputs(f4, alpha, beta)
+y = evaluate.(f4,X)
+converted_y = evaluate.(f4_converted, X_converted)
+sum(abs.(y .- converted_y)) < 1e-10

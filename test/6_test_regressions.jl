@@ -6,7 +6,7 @@ using GLM
 tol = 10*eps()
 
 Random.seed!(1)
-obs = 1000000
+obs = 1000
 X = rand(obs)
 y = X .+ rand(Normal(),obs) .+ 7
 
@@ -55,3 +55,24 @@ sum(abs.(glm_preds .- package_predictions)) < 1e-10
 
 
 # Chebyshev approximation
+func = sin
+nodes  =  12
+degree =  8
+left   = -2.0
+right  =  5.0
+approxim = UnivariateFunctions.create_chebyshev_approximation(func, nodes, degree, left, right)
+X = convert(Array{Float64,1}, left:0.01:right)
+y = func.(X)
+y_approx = evaluate.(Ref(approxim), X)
+maximum(abs.(y .- y_approx)) < 0.01
+
+func = exp
+nodes  =  12
+degree =  8
+left   =  1.0
+right  =  5.0
+approxim = UnivariateFunctions.create_chebyshev_approximation(func, nodes, degree, left, right)
+X = convert(Array{Float64,1}, left:0.01:right)
+y = func.(X)
+y_approx = evaluate.(Ref(approxim), X)
+maximum(abs.(y .- y_approx)) < 0.01
