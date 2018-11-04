@@ -75,9 +75,3 @@ function create_linear_interpolation(x::Array{Float64,1},y::Array{Float64,1})
     end
     return Piecewise_Function(starts_, funcs_)
 end
-
-#using Dates
-#using UnivariateFunctions
-#x = [Date(2020,1,1), Date(2021,1,1), Date(2022,1,1)]
-#y = [1.0,2.0,3.0]
-#create_constant_interpolation_to_right(x,y)

@@ -13,9 +13,6 @@ function indefinite_integral(f::Piecewise_Function)
     return Piecewise_Function(f.starts_, indef_integrals)
 end
 
-
-
-
 function +(f::Piecewise_Function,number::Float64)
     functions_with_addition = f.functions_ .+ number
     return Piecewise_Function(f.starts_, functions_with_addition)
