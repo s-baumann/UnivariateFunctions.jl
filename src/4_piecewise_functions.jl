@@ -29,19 +29,19 @@ function /(f::Piecewise_Function,number::Float64)
     functions_with_division = f.functions_ ./ number
     return Piecewise_Function(f.starts_, functions_with_division)
 end
-function +(f::Piecewise_Function,number::Integer)
+function +(f::Piecewise_Function,number::Int)
     number_as_float = convert(Float64, number)
     return +(f,number_as_float)
 end
-function -(f::Piecewise_Function,number::Integer)
+function -(f::Piecewise_Function,number::Int)
     number_as_float = convert(Float64, number)
     return -(f,number_as_float)
 end
-function *(f::Piecewise_Function,number::Integer)
+function *(f::Piecewise_Function,number::Int)
     number_as_float = convert(Float64, number)
     return *(f,number_as_float)
 end
-function /(f::Piecewise_Function,number::Integer)
+function /(f::Piecewise_Function,number::Int)
     number_as_float = convert(Float64, number)
     return /(f,number_as_float)
 end
@@ -63,30 +63,19 @@ end
 function +(f1::Piecewise_Function,f2::Piecewise_Function)
     c_f1, c_f2 = create_common_pieces(f1,f2)
     starts_ = c_f1.starts_
-    number_of_pieces = length(starts_)
-    functions_ = Array{UnivariateFunction}(undef, number_of_pieces)
-    for i in 1:number_of_pieces
-        functions_[i] = c_f1.functions_[i] + c_f2.functions_[i]
-    end
-    return Piecewise_Function(starts_, functions_)
-end
-function *(f1::Piecewise_Function,f2::Piecewise_Function)
-    c_f1, c_f2 = create_common_pieces(f1,f2)
-    starts_ = c_f1.starts_
-    number_of_pieces = length(starts_)
-    functions_ = Array{UnivariateFunction}(undef, number_of_pieces)
-    for i in 1:number_of_pieces
-        functions_[i] = c_f1.functions_[i] * c_f2.functions_[i]
-    end
+    functions_  = c_f1.functions_ + c_f2.functions_
     return Piecewise_Function(starts_, functions_)
 end
 function -(f1::Piecewise_Function,f2::Piecewise_Function)
     c_f1, c_f2 = create_common_pieces(f1,f2)
     starts_ = c_f1.starts_
-    number_of_pieces = length(starts_)
-    functions_ = Array{UnivariateFunction}(undef, number_of_pieces)
-    for i in 1:number_of_pieces
-        functions_[i] = c_f1.functions_[i] - c_f2.functions_[i]
-    end
+    functions_ = c_f1.functions_ - c_f2.functions_
+    return Piecewise_Function(starts_, functions_)
+end
+
+function *(f1::Piecewise_Function,f2::Piecewise_Function)
+    c_f1, c_f2 = create_common_pieces(f1,f2)
+    starts_ = c_f1.starts_
+    functions_ = c_f1.functions_ .* c_f2.functions_
     return Piecewise_Function(starts_, functions_)
 end

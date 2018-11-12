@@ -42,19 +42,19 @@ function /(f::PE_Function, number::Float64)
     return *(f, 1/number )
 end
 
-function +(f::PE_Function, number::Integer)
+function +(f::PE_Function, number::Int)
     number_as_float = convert(Float64, number)
     return +(f, number_as_float)
 end
-function -(f::PE_Function, number::Integer)
+function -(f::PE_Function, number::Int)
     number_as_float = convert(Float64, number)
     return -(f, number_as_float)
 end
-function *(f::PE_Function, number::Integer)
+function *(f::PE_Function, number::Int)
     number_as_float = convert(Float64, number)
     return *(f, number_as_float)
 end
-function /(f::PE_Function, number::Integer)
+function /(f::PE_Function, number::Int)
     number_as_float = convert(Float64, number)
     return /(f, number_as_float)
 end
@@ -96,15 +96,15 @@ end
 function *(f1::PE_Function,f2::PE_Function)
     base_func = f1
     other_func = f2
-    diff = f2.base_ - f1.base_
-    if abs(diff) < tol
+    diff_in_base = f2.base_ - f1.base_
+    if abs(diff_in_base) < tol
         return PE_Function(f1.a_ * f2.a_, f1.b_ + f2.b_, f1.base_, f1.d_ + f2.d_ )
     elseif (f1.d_ < tol) & (f1.b_ < tol)
         return f1.a_ * f2
     elseif (f2.d_ < tol) & (f2.b_ < tol)
         return f2.a_ * f1
     end
-    if diff < 0
+    if diff_in_base < 0
         base_func = f2
         other_func = f1
     end

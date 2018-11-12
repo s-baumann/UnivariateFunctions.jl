@@ -34,19 +34,19 @@ function /(f::Sum_Of_Functions, number::Float64)
     return *(f, 1/number )
 end
 
-function +(f::Sum_Of_Functions, number::Integer)
+function +(f::Sum_Of_Functions, number::Int)
     number_as_float = convert(Float64, number)
     return +(f, number_as_float)
 end
-function -(f::Sum_Of_Functions, number::Integer)
+function -(f::Sum_Of_Functions, number::Int)
     number_as_float = convert(Float64, number)
     return -(f, number_as_float)
 end
-function *(f::Sum_Of_Functions, number::Integer)
+function *(f::Sum_Of_Functions, number::Int)
     number_as_float = convert(Float64, number)
     return *(f, number_as_float)
 end
-function /(f::Sum_Of_Functions, number::Integer)
+function /(f::Sum_Of_Functions, number::Int)
     number_as_float = convert(Float64, number)
     return /(f, number_as_float)
 end
