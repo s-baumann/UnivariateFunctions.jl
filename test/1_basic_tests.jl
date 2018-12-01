@@ -27,7 +27,7 @@ typeof(sum4) == UnivariateFunctions.Sum_Of_Functions
 length(sum4.functions_) == 3
 sum5 =  Sum_Of_Functions([sum3, sum4])
 typeof(sum5) == UnivariateFunctions.Sum_Of_Functions
-length(sum5.functions_) == 3
+length(sum5.functions_) == 4
 abs(evaluate(sum1, 5.0) - f1_test_result) < tol
 abs(evaluate(sum5, 5.0) - 2*f3_test_result - f1_test_result) < 100* tol
 abs(evaluate(sum0, 5.0)) < tol

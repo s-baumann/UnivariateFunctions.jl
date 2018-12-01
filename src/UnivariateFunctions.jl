@@ -3,7 +3,6 @@ module UnivariateFunctions
 using Dates
 using SchumakerSpline: Schumaker
 using GLM
-using DataFrames
 
 # This includes timing functions for use of UnivariateFunctions with dates.
 include("date_conversions.jl")
@@ -13,34 +12,29 @@ export years_between, years_from_global_base
 include("0_structs_and_generic_reversals.jl")
 export UnivariateFunction, Undefined_Function, PE_Function, Sum_Of_Functions, Piecewise_Function
 export change_base_of_PE_Function, trim_piecewise_function, sort, convert_to_linearly_rescale_inputs
+
 # These all implement evaluation, calculus and operators for the main structs.
 include("1_undefined_function.jl")
 include("2_pe_functions.jl")
 include("3_sum_of_functions.jl")
 include("4_piecewise_functions.jl")
 export evaluate, derivative, indefinite_integral
+
 include("5_calculus.jl")
 export  evaluate_integral, right_integral, left_integral
+
 include("chebyshevs.jl")
 export get_chevyshevs_up_to, get_chebyshev
+
 include("6_splines_and_interpolation.jl")
 export create_quadratic_spline, create_constant_interpolation_to_right
 export create_constant_interpolation_to_left, create_linear_interpolation
+
 include("7_regressions_and_approximation.jl")
 export create_ols_approximation, create_chebyshev_approximation
 
-# Multivariate functions
-include("8_MultivariateFunctions.jl")
-export Multivariate_PE_Function, Multivariate_Sum_Of_Functions
-include("9_MultivariatePiecewiseFunctions.jl")
-export Multivariate_Piecewise_Function
-include("10_Calculus_for_Multivariate.jl")
-export marginal_integral
-include("11_multivariate_regressions_and_approximation.jl")
-export create_saturated_ols_approximation
-
 # The following operators also have overloads
-export +, -, *, /, ^, sort, convert
+export +, -, *, /, ^, sort
 end
 
 # In terms of UnivariateFunction types we have the following seniority:

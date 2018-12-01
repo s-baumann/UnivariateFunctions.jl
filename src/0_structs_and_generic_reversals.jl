@@ -245,7 +245,7 @@ function evaluate(f::UnivariateFunction, d::Int)
     return evaluate(f, d_as_float)
 end
 
-function ^(f1::UnivariateFunction,num::Int)
+function ^(f1::UnivariateFunction,num::Integer) # This will get overridden for undefined and zeros.
     if num < 0
         error("Cannot raise any univariate function to a negative power")
     elseif num == 0

@@ -1,19 +1,11 @@
 import Base.+, Base.-, Base./, Base.*, Base.^
 
 function evaluate(f::Undefined_Function, point::Float64)
-    return missing
-end
-function evaluate(f::Undefined_Function, coordinates::Dict{Symbol,Float64})
-    return missing
+    missing
 end
 function derivative(f::Undefined_Function)
     return f
 end
-
-function derivative(f::Undefined_Function, variable::Symbol, n::Int)
-    return f
-end
-
 function indefinite_integral(f::Undefined_Function)
     return f
 end
@@ -136,8 +128,4 @@ function /(f1::Sum_Of_Functions, f2::Undefined_Function)
 end
 function /(f1::Piecewise_Function, f2::Undefined_Function)
     return /(f2,f1)
-end
-
-function evaluate(f::Union{Float64,Int}, num::Union{Float64,Int})
-    return convert(Float64, f)
 end
