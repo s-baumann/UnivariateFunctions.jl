@@ -1,4 +1,4 @@
-# UnivariateFunctions.jl
+﻿# UnivariateFunctions.jl
 
 [![Build Status](https://travis-ci.com/s-baumann/UnivariateFunctions.jl.svg?branch=master)](https://travis-ci.org/s-baumann/UnivariateFunctions.jl)
 
@@ -12,6 +12,8 @@ There are a few ways in which it can be used.
     easily. It can be differentiated and then added to another function, etc.
 * Any continuous interpolation scheme can be done with the added benefit that derivatives/integrals/products etc can be found analytically.
 * Basic approximation schemes like OLS regression and chebyshev polynomials can be done with the added benefit that derivatives/integrals/products etc can be found analytically.
+
+Development on this package is discontinued other than bug fixes as I found a way to generalise everything to multiple dimensions in [MultivariateFunctions.jl](https://github.com/s-baumann/MultivariateFunctions.jl). This provides a superset of the functionality of UnivariateFunctions.jl.
 
 ## Structs
 
