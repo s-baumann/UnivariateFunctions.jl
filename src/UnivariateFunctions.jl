@@ -1,8 +1,8 @@
 module UnivariateFunctions
 
-using Dates: Date, days
+using Dates
 using SchumakerSpline: Schumaker
-using GLM: fit, LinearModel
+using GLM
 
 # This includes timing functions for use of UnivariateFunctions with dates.
 include("date_conversions.jl")
