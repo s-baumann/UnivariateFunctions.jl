@@ -1,14 +1,14 @@
-function create_quadratic_spline(x::Array{Date,1},y::Array{Float64,1} ; gradients::Union{missing,Array{Float64,1}} = missing, extrapolation::Schumaker_ExtrapolationSchemes = Curve, left_gradient::Union{Missing,Float64} = missing, right_gradient::Union{Missing,Float64} = missing)
+function create_quadratic_spline(x::Array{Date,1},y::Array{Float64,1} ; gradients::Union{Missing,Array{Float64,1}} = missing, extrapolation::Schumaker_ExtrapolationSchemes = Curve, left_gradient::Union{Missing,Float64} = missing, right_gradient::Union{Missing,Float64} = missing)
     x_as_Float64s = years_from_global_base.(x)
     return create_quadratic_spline(x_as_Float64s, y; gradients = gradients, extrapolation = extrapolation, left_gradient = left_gradient, right_gradient = right_gradient)
 end
 
-function create_quadratic_spline(x::Array{Int,1},y::Array{Float64,1} ; gradients::Union{missing,Array{Float64,1}} = missing, extrapolation::Schumaker_ExtrapolationSchemes = Curve, left_gradient::Union{Missing,Float64} = missing, right_gradient::Union{Missing,Float64} = missing)
+function create_quadratic_spline(x::Array{Int,1},y::Array{Float64,1} ; gradients::Union{Missing,Array{Float64,1}} = missing, extrapolation::Schumaker_ExtrapolationSchemes = Curve, left_gradient::Union{Missing,Float64} = missing, right_gradient::Union{Missing,Float64} = missing)
     x_as_Float64s = convert.(Float64, x)
     return create_quadratic_spline(x_as_Float64s, y; gradients = gradients, extrapolation = extrapolation, left_gradient = left_gradient, right_gradient = right_gradient)
 end
 
-function create_quadratic_spline(x::Array{Float64,1},y::Array{Float64,1} ; gradients::Union{missing,Array{Float64,1}} = missing, extrapolation::Schumaker_ExtrapolationSchemes = Curve, left_gradient::Union{Missing,Float64} = missing, right_gradient::Union{Missing,Float64} = missing)
+function create_quadratic_spline(x::Array{Float64,1},y::Array{Float64,1} ; gradients::Union{Missing,Array{Float64,1}} = missing, extrapolation::Schumaker_ExtrapolationSchemes = Curve, left_gradient::Union{Missing,Float64} = missing, right_gradient::Union{Missing,Float64} = missing)
     schum = Schumaker(x, y; gradients = gradients, extrapolation = extrapolation, left_gradient = left_gradient, right_gradient = right_gradient)
     return create_quadratic_spline(schum)
 end
