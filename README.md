@@ -6,16 +6,13 @@
 
 This implements single algebra and evaluation on simple univariate functions.
 There are a few ways in which it can be used.
-* As in the [StochasticIntegrals.jl](https://github.com/s-baumann/StochasticIntegrals.jl) package this package can be used to define
-    functions that will be the integrands in stochastic integrals. This has the benefit
-    that the means, variances & covariances implied by these stochastic integrals can be found analytically.
 * UnivariateFunctions can be used in the creation of splines. This has the added
     advantage that a spline implemented as a UnivariateFunction can be manipulated
     easily. It can be differentiated and then added to another function, etc.
 * Any continuous interpolation scheme can be done with the added benefit that derivatives/integrals/products etc can be found analytically.
 * Basic approximation schemes like OLS regression and chebyshev polynomials can be done with the added benefit that derivatives/integrals/products etc can be found analytically.
 
-Development on this package is discontinued other than bug fixes as I found a way to generalise everything to multiple dimensions in [MultivariateFunctions.jl](https://github.com/s-baumann/MultivariateFunctions.jl). This provides a superset of the functionality of UnivariateFunctions.jl.
+Development on this package is discontinued other than bug fixes as everything is generalised in [MultivariateFunctions.jl](https://github.com/s-baumann/MultivariateFunctions.jl). This provides a superset of the functionality of UnivariateFunctions.jl.
 
 ## Structs
 
