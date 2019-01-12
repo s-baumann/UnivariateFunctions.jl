@@ -1,7 +1,7 @@
 module UnivariateFunctions
 
 using Dates
-using SchumakerSpline: Schumaker
+using SchumakerSpline
 using GLM
 
 # This includes timing functions for use of UnivariateFunctions with dates.
