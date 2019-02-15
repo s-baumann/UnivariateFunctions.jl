@@ -1,5 +1,5 @@
 import Base.+, Base.-, Base./, Base.*
-
+import SchumakerSpline.evaluate
 function evaluate(sf::Sum_Of_Functions, point::Float64)
     total = 0.0
     for func in sf.functions_

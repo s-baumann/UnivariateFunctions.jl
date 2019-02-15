@@ -1,3 +1,6 @@
+import SchumakerSpline.evaluate
+import SchumakerSpline.evaluate_integral
+
 function right_integral(f::UnivariateFunction, left::Float64)
     indef_int = indefinite_integral(f)
     left_constant = evaluate(indef_int, left)

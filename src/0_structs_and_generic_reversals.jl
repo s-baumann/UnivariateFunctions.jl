@@ -1,6 +1,6 @@
 import Base.+, Base.-, Base./, Base.*, Base.^
 import Base.sort
-
+import SchumakerSpline.evaluate
 abstract type UnivariateFunction end
 
 struct Undefined_Function <: UnivariateFunction

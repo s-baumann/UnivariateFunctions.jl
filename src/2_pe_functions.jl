@@ -1,5 +1,5 @@
 import Base.+, Base.-, Base./, Base.*
-
+import SchumakerSpline.evaluate
 function evaluate(f::PE_Function, x::Float64)
     diff = x - f.base_
     return f.a_ * exp(f.b_ * diff) * (diff)^f.d_

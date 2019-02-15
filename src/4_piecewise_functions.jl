@@ -1,3 +1,5 @@
+import SchumakerSpline.evaluate
+
 function evaluate(f::Piecewise_Function, point::Float64)
     which_function = searchsortedlast(f.starts_, point)
     return evaluate(f.functions_[which_function], point)

@@ -1,5 +1,5 @@
 import Base.+, Base.-, Base./, Base.*, Base.^
-
+import SchumakerSpline.evaluate
 function evaluate(f::Undefined_Function, point::Float64)
     missing
 end
