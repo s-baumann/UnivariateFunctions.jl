@@ -1,4 +1,4 @@
-const number_of_chebyshevs_to_compile_into_binaries = 10
+const number_of_chebyshevs_to_compile_into_binaries = 20
 
 function next_chebyshev(previous::Sum_Of_Functions, two_previous::Sum_Of_Functions)
     return PE_Function(2.0,0.0,0.0,1) * previous - two_previous
@@ -18,7 +18,7 @@ for i in 3:number_of_chebyshevs_to_compile_into_binaries
     second_kind_chebyshevs[i] = next_chebyshev(second_kind_chebyshevs[i-1], second_kind_chebyshevs[i-2])
 end
 
-function get_chevyshevs_up_to(num::Int, first_kind::Bool = true)
+function get_chevyshevs_up_to(num::Integer, first_kind::Bool = true)
     chebyshevs = Array{Sum_Of_Functions}(undef, num)
     if num >= number_of_chebyshevs_to_compile_into_binaries
         if first_kind
@@ -39,7 +39,7 @@ function get_chevyshevs_up_to(num::Int, first_kind::Bool = true)
     return chebyshevs
 end
 
-function get_chebyshev(num::Int, first_kind::Bool = true)
+function get_chebyshev(num::Integer, first_kind::Bool = true)
     chebyshevs = get_chevyshev_up_to(num, first_kind)
     return chebyshevs[num]
 end

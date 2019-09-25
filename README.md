@@ -12,7 +12,7 @@ There are a few ways in which it can be used.
 * Any continuous interpolation scheme can be done with the added benefit that derivatives/integrals/products etc can be found analytically.
 * Basic approximation schemes like OLS regression and chebyshev polynomials can be done with the added benefit that derivatives/integrals/products etc can be found analytically.
 
-Development on this package is discontinued other than bug fixes as everything is generalised in [MultivariateFunctions.jl](https://github.com/s-baumann/MultivariateFunctions.jl). This provides a superset of the functionality of UnivariateFunctions.jl.
+This is faster and simpler than the closely related package [MultivariateFunctions.jl](https://github.com/s-baumann/MultivariateFunctions.jl). The cost is that it is restricted to only one dimension.
 
 ## Structs
 
@@ -41,7 +41,7 @@ It also supports the following spline (which can also be used for interpolation)
 ## Approximation and regression
 So for this package supports the creation of the following approximation schemes:
 * OLS regression. The create_ols_approximation function can create a UnivariateFunction approximating a linear relationship. The degree input to this function can be used to specify the number of higher powers of x to be used in approximating y. For instance if the degree is two then y will be approximated as a linear combination of x and x^2 as well as an intercept (if the intercept boolean is true).
-* Chebyshev polynomials - This will approximate a function using the Chebyshev basis functions. This approximation function can then be integreted which accomplished Chebyshev–Gauss quadrature.
+* Chebyshev polynomials - This will approximate a function using the Chebyshev basis functions. This approximation function can then be integrated to accomplish Chebyshev–Gauss quadrature.
 
 
 

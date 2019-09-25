@@ -1,4 +1,4 @@
-function create_ols_approximation(y::Array{Float64,1}, x::Array{Float64,1}, base_x::Float64 = 0.0, degree::Int = 1, intercept::Bool = true)
+function create_ols_approximation(y::Array{<:Real,1}, x::Array{<:Real,1}, base_x::Real = 0.0, degree::Integer = 1, intercept::Bool = true)
     obs = length(y)
     if degree < 0
         error("Cannot approximate with OLS with a degree that is negative")
@@ -23,24 +23,24 @@ function create_ols_approximation(y::Array{Float64,1}, x::Array{Float64,1}, base
         func_array[1] = PE_Function(beta[1], 0.0, base_x, 0)
     end
     for d in 1:degree
-        func_array[d+convert(Int, intercept)] = PE_Function(beta[d+convert(Int, intercept)], 0.0, base_x, d)
+        func_array[d+Integer(intercept)] = PE_Function(beta[d+Integer(intercept)], 0.0, base_x, d)
     end
     return Sum_Of_Functions(func_array)
 end
 
-function create_ols_approximation(y::Array{Float64,1}, x::Array{Date,1}, base_x::Date = global_base_date, degree::Int = 1, intercept::Bool = true)
+function create_ols_approximation(y::Array{<:Real,1}, x::Array{Date,1}, base_x::Date = global_base_date, degree::Integer = 1, intercept::Bool = true)
     base = years_from_global_base.(base_x)
     xx   = years_from_global_base.(x)
     return create_ols_approximation(y, xx, base, degree, intercept)
 end
 
-function get_cholesky_coefficients(chebyshev::Sum_Of_Functions, y::Array{Float64,1}, unnormalised_nodes::Array{Float64,1})
+function get_cholesky_coefficients(chebyshev::Sum_Of_Functions, y::Array{<:Real,1}, unnormalised_nodes::Array{<:Real,1})
     chebyshev_on_nodes = evaluate.(Ref(chebyshev), unnormalised_nodes)
     a = sum(y .* chebyshev_on_nodes) / sum(chebyshev_on_nodes .^ 2)
     return a
 end
 
-function create_chebyshev_approximation(func::Function, nodes::Int, degree::Int, left::Float64, right::Float64)
+function create_chebyshev_approximation(func::Function, nodes::Integer, degree::Integer, left::Real, right::Real)
     # This is all after Algorithm 6.2 from Judd (1998) Numerical Methods in Economics.
     if nodes <= degree
         error("Need to have more nodes than degree to use a chebyshev approximation")

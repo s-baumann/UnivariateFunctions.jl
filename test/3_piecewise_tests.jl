@@ -18,21 +18,21 @@ f2 = Piecewise_Function([-0.1, 0.0,2.0, 40.0], [before, first_, second, last_])
 
 f3 =  Piecewise_Function([-0.1, 0.0,2.0, 40.0], [before, f1, second, last_])
 f3.starts_ == [-Inf, -0.100, 0.00, 2.00, 40.0]
-typeof(f3.functions_[1]) == UnivariateFunctions.Undefined_Function
-typeof(f3.functions_[2]) == UnivariateFunctions.PE_Function
-typeof(f3.functions_[3]) == UnivariateFunctions.PE_Function
-typeof(f3.functions_[4]) == UnivariateFunctions.PE_Function
-typeof(f3.functions_[5]) == UnivariateFunctions.Sum_Of_Functions
+isa(f3.functions_[1],UnivariateFunctions.Undefined_Function)
+isa(f3.functions_[2],UnivariateFunctions.PE_Function)
+isa(f3.functions_[3],UnivariateFunctions.PE_Function)
+isa(f3.functions_[4],UnivariateFunctions.PE_Function)
+isa(f3.functions_[5],UnivariateFunctions.Sum_Of_Functions)
 
 f4 =  Piecewise_Function([-2.1, -1.1,4.0, 40.0], [second, f1, second, last_])
 f4.starts_ == [-Inf, -2.10, -1.10, -1.00, 3.00, 4.00, 40.0]
-typeof(f4.functions_[1]) == UnivariateFunctions.Undefined_Function
-typeof(f4.functions_[2]) == UnivariateFunctions.PE_Function
-typeof(f4.functions_[3]) == UnivariateFunctions.PE_Function
-typeof(f4.functions_[4]) == UnivariateFunctions.PE_Function
-typeof(f4.functions_[5]) == UnivariateFunctions.PE_Function
-typeof(f4.functions_[6]) == UnivariateFunctions.PE_Function
-typeof(f4.functions_[7]) == UnivariateFunctions.Sum_Of_Functions
+isa(f4.functions_[1], UnivariateFunctions.Undefined_Function)
+isa(f4.functions_[2], UnivariateFunctions.PE_Function)
+isa(f4.functions_[3], UnivariateFunctions.PE_Function)
+isa(f4.functions_[4], UnivariateFunctions.PE_Function)
+isa(f4.functions_[5], UnivariateFunctions.PE_Function)
+isa(f4.functions_[6], UnivariateFunctions.PE_Function)
+isa(f4.functions_[7], UnivariateFunctions.Sum_Of_Functions)
 
 function test_result(func, eval0, eval5, len = 1)
     val_test0 = abs(evaluate(func, 0.0) - eval0) < 1e-09
@@ -43,7 +43,7 @@ function test_result(func, eval0, eval5, len = 1)
     if (!val_test5)
         print("Failed Val Test at 5.0")
     end
-    if typeof(func) == UnivariateFunctions.Piecewise_Function
+    if isa(func, UnivariateFunctions.Piecewise_Function)
         len_test = length(func.functions_) == len
         if (!len_test)
             print("Failed Length Test")

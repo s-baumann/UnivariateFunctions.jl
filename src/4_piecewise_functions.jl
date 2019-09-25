@@ -1,8 +1,11 @@
 import SchumakerSpline.evaluate
 
-function evaluate(f::Piecewise_Function, point::Float64)
+function evaluate(f::Piecewise_Function, point::Real)
     which_function = searchsortedlast(f.starts_, point)
     return evaluate(f.functions_[which_function], point)
+end
+function (s::Piecewise_Function)(x::Union{Real,Date})
+    return evaluate(s, x)
 end
 
 function derivative(f::Piecewise_Function)
@@ -15,37 +18,21 @@ function indefinite_integral(f::Piecewise_Function)
     return Piecewise_Function(f.starts_, indef_integrals)
 end
 
-function +(f::Piecewise_Function,number::Float64)
+function +(f::Piecewise_Function,number::Real)
     functions_with_addition = f.functions_ .+ number
     return Piecewise_Function(f.starts_, functions_with_addition)
 end
-function -(f::Piecewise_Function,number::Float64)
+function -(f::Piecewise_Function,number::Real)
     functions_with_subtraction = f.functions_ .- number
     return Piecewise_Function(f.starts_, functions_with_subtraction)
 end
-function *(f::Piecewise_Function,number::Float64)
+function *(f::Piecewise_Function,number::Real)
     functions_with_multiplication = f.functions_ .* number
     return Piecewise_Function(f.starts_, functions_with_multiplication)
 end
-function /(f::Piecewise_Function,number::Float64)
+function /(f::Piecewise_Function,number::Real)
     functions_with_division = f.functions_ ./ number
     return Piecewise_Function(f.starts_, functions_with_division)
-end
-function +(f::Piecewise_Function,number::Integer)
-    number_as_float = convert(Float64, number)
-    return +(f,number_as_float)
-end
-function -(f::Piecewise_Function,number::Integer)
-    number_as_float = convert(Float64, number)
-    return -(f,number_as_float)
-end
-function *(f::Piecewise_Function,number::Integer)
-    number_as_float = convert(Float64, number)
-    return *(f,number_as_float)
-end
-function /(f::Piecewise_Function,number::Integer)
-    number_as_float = convert(Float64, number)
-    return /(f,number_as_float)
 end
 
 function create_common_pieces(f1::Piecewise_Function,f2::Piecewise_Function)

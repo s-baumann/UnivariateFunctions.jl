@@ -1,7 +1,7 @@
 import SchumakerSpline.evaluate
 import SchumakerSpline.evaluate_integral
 
-function right_integral(f::UnivariateFunction, left::Float64)
+function right_integral(f::UnivariateFunction, left::Real)
     indef_int = indefinite_integral(f)
     left_constant = evaluate(indef_int, left)
     return indef_int - left_constant
@@ -12,11 +12,11 @@ function right_integral(f::UnivariateFunction, left::Date)
     return right_integral(f, left_float)
 end
 
-function right_integral(f::Piecewise_Function, left::Float64)
+function right_integral(f::Piecewise_Function, left::R) where R<:Real
     whole_number_of_intervals = length(f.starts_)
     which_interval_contains_left = searchsortedlast(f.starts_, left)
     number_of_intervals = whole_number_of_intervals - which_interval_contains_left + 1
-    starts_    =  Array{Float64}(undef, number_of_intervals)
+    starts_    =  Array{R,1}(undef, number_of_intervals)
     starts_[1] = left
     first_indefinite_integral = indefinite_integral(f.functions_[which_interval_contains_left])
     functions_    =  Array{UnivariateFunction}(undef, number_of_intervals)
@@ -40,7 +40,7 @@ function right_integral(f::Piecewise_Function, left::Float64)
     return Piecewise_Function(starts_, functions_)
 end
 
-function left_integral(f::UnivariateFunction, right::Float64)
+function left_integral(f::UnivariateFunction, right::Real)
     indef_int = indefinite_integral(f)
     right_constant = evaluate(indef_int, right)
     return right_constant - indef_int
@@ -51,11 +51,11 @@ function left_integral(f::UnivariateFunction, right::Date)
     return left_integral(f, right_float)
 end
 
-function left_integral(f::Piecewise_Function, right::Float64)
+function left_integral(f::Piecewise_Function, right::R) where R<:Real
     whole_number_of_intervals = length(f.starts_)
     which_interval_contains_right = searchsortedlast(f.starts_, right)
     number_of_intervals = which_interval_contains_right
-    starts_    =  Array{Float64}(undef, number_of_intervals)
+    starts_    =  Array{R,1}(undef, number_of_intervals)
     starts_[number_of_intervals] = f.starts_[which_interval_contains_right]
     last_indefinite_integral = indefinite_integral(f.functions_[which_interval_contains_right])
     functions_    =  Array{UnivariateFunction}(undef, number_of_intervals)
@@ -79,7 +79,7 @@ function left_integral(f::Piecewise_Function, right::Float64)
 end
 
 
-function evaluate_integral(f::UnivariateFunction,left::Float64, right::Float64)
+function evaluate_integral(f::UnivariateFunction,left::Real, right::Real)
     indef_int  = indefinite_integral(f)
     left_eval  = evaluate(indef_int, left)
     right_eval = evaluate(indef_int, right)
@@ -92,6 +92,6 @@ function evaluate_integral(f::UnivariateFunction,left::Date, right::Date)
     return evaluate_integral(f, left_as_float, right_as_float)
 end
 
-function evaluate_integral(f::Piecewise_Function,left::Float64, right::Float64)
+function evaluate_integral(f::Piecewise_Function,left::Real, right::Real)
     return evaluate(right_integral(f, left), right)
 end

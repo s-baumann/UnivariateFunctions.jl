@@ -13,7 +13,7 @@ f2_test_result = 0.0
 abs(evaluate(f2, 5.0) - f2_test_result) < tol
 f3 = PE_Function(1.0, 8.0,7.0, 8)
 f3_test_result = test_pe(1.0, 8.0,7.0, 8,5.0)
-abs(evaluate(f3, 5.0) - f3_test_result) < tol
+abs(f3(5.0) - f3_test_result) < tol
 
 # Sum of functions
 sum0 =  Sum_Of_Functions([])
@@ -24,11 +24,11 @@ sum3 =  Sum_Of_Functions([f2,f3])
 typeof(sum3) == UnivariateFunctions.Sum_Of_Functions
 sum4 =  Sum_Of_Functions([f1,f2,f3])
 typeof(sum4) == UnivariateFunctions.Sum_Of_Functions
-length(sum4.functions_) == 3
+length(sum4.functions_) == 2
 sum5 =  Sum_Of_Functions([sum3, sum4])
 typeof(sum5) == UnivariateFunctions.Sum_Of_Functions
-length(sum5.functions_) == 4
-abs(evaluate(sum1, 5.0) - f1_test_result) < tol
+length(sum5.functions_) == 2
+abs(sum1(5.0) - f1_test_result) < tol
 abs(evaluate(sum5, 5.0) - 2*f3_test_result - f1_test_result) < 100* tol
 abs(evaluate(sum0, 5.0)) < tol
 
@@ -40,7 +40,7 @@ function test_result(func, expected_type, eval_to, len = 1)
     if (!val_test)
         print("Failed Val Test")
     end
-    type_test = typeof(func) == expected_type
+    type_test = isa(func, expected_type)
     if (!type_test)
         print("Failed Type Test")
     end
@@ -76,19 +76,19 @@ test_result(integ * f1, UnivariateFunctions.PE_Function, (f1_test_result) * inte
 # Sum and Float
 test_result(sum4 + fl, UnivariateFunctions.Sum_Of_Functions, f1_test_result + f3_test_result + fl, 3 )
 test_result(sum4 - fl, UnivariateFunctions.Sum_Of_Functions, f1_test_result + f3_test_result - fl, 3 )
-test_result(sum4 * fl, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) * fl, 3 )
-test_result(sum4 / fl, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) / fl, 3 )
+test_result(sum4 * fl, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) * fl, 2 )
+test_result(sum4 / fl, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) / fl, 2 )
 test_result(fl + sum4, UnivariateFunctions.Sum_Of_Functions, f1_test_result + f3_test_result + fl, 3 )
 test_result(fl - sum4, UnivariateFunctions.Sum_Of_Functions, -f1_test_result -f3_test_result + fl, 3 )
-test_result(fl * sum4, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) * fl, 3 )
+test_result(fl * sum4, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) * fl, 2 )
 # Sum and Int
 test_result(sum4 + integ, UnivariateFunctions.Sum_Of_Functions, f1_test_result + f3_test_result + integ, 3 )
 test_result(sum4 - integ, UnivariateFunctions.Sum_Of_Functions, f1_test_result + f3_test_result - integ, 3 )
-test_result(sum4 * integ, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) * integ, 3 )
-test_result(sum4 / integ, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) / integ, 3 )
+test_result(sum4 * integ, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) * integ, 2 )
+test_result(sum4 / integ, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) / integ, 2 )
 test_result(integ + sum4, UnivariateFunctions.Sum_Of_Functions, f1_test_result + f3_test_result + integ, 3 )
 test_result(integ - sum4, UnivariateFunctions.Sum_Of_Functions, -f1_test_result -f3_test_result + integ, 3 )
-test_result(integ * sum4, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) * integ, 3 )
+test_result(integ * sum4, UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result) * integ, 2 )
 
 ### Making sums with addition and subtraction.
 evaluate(sum4, 5.0) == evaluate(f1 + f2 + f3, 5.0)
@@ -96,7 +96,7 @@ abs(evaluate(sum4, 5.0) - 2*evaluate(f3, 5.0) - evaluate(f1 + f2 - f3, 5.0)) < 0
 
 ### Changing of base
 f1_unchanged = change_base_of_PE_Function(f1, 3.0)
-typeof(f1_unchanged) == UnivariateFunctions.PE_Function
+isa(f1_unchanged, UnivariateFunctions.PE_Function)
 abs(f1.base_ - f1_unchanged.base_) < tol
 
 f1_changed = change_base_of_PE_Function(f1, 4.0)
@@ -120,9 +120,9 @@ abs(evaluate(f3_changed, 5.0) - f3_test_result) < 100*tol # Changing bases shoul
 ### multiplication of functions
 test_result( f1 * f3 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result * f3_test_result), 9 )
 test_result( f1 * PE_Function(1.0,2.0,3.0,4) , UnivariateFunctions.PE_Function, (f1_test_result * f1_test_result), 1 )
-test_result( f1 * sum4 , UnivariateFunctions.Sum_Of_Functions, f1_test_result * (f1_test_result + f3_test_result), 11 )
-test_result( sum4 * f1 , UnivariateFunctions.Sum_Of_Functions, f1_test_result * (f1_test_result + f3_test_result), 11 )
-test_result( sum4 * sum4 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result)^2, 12 )
+test_result( f1 * sum4 , UnivariateFunctions.Sum_Of_Functions, f1_test_result * (f1_test_result + f3_test_result), 10 )
+test_result( sum4 * f1 , UnivariateFunctions.Sum_Of_Functions, f1_test_result * (f1_test_result + f3_test_result), 10 )
+test_result( sum4 * sum4 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result)^2, 11 )
 
 ### Powers pe
 test_result( f1 ^ 0 , UnivariateFunctions.PE_Function, 1.0 )
@@ -132,8 +132,8 @@ abs(evaluate(f1 ^ 4 ,5.0) - (f1_test_result * f1_test_result * f1_test_result * 
 
 ### Powers sums
 test_result( sum4 ^ 0 , UnivariateFunctions.PE_Function, 1.0 )
-test_result( sum4 ^ 1 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result), 3 )
-test_result( sum4 ^ 2 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result)^2, 12 )
+test_result( sum4 ^ 1 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result), 2 )
+test_result( sum4 ^ 2 , UnivariateFunctions.Sum_Of_Functions, (f1_test_result + f3_test_result)^2, 11 )
 # Higher powers give an underflow problem with base changes.
 
 

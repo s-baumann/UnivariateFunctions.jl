@@ -1,8 +1,11 @@
 import Base.+, Base.-, Base./, Base.*
 import SchumakerSpline.evaluate
-function evaluate(f::PE_Function, x::Float64)
+function evaluate(f::PE_Function, x::Real)
     diff = x - f.base_
     return f.a_ * exp(f.b_ * diff) * (diff)^f.d_
+end
+function (s::PE_Function)(x::Union{Real,Date})
+    return evaluate(s, x)
 end
 
 function derivative(f::PE_Function)
@@ -28,35 +31,18 @@ function indefinite_integral(f::PE_Function)
     return u * v - indefinite_integral( derivative(u) *v    )
 end
 
-function +(f::PE_Function,number::Float64)
+function +(f::PE_Function,number::Real)
     constant_function = PE_Function(number, 0.0,0.0,0)
     return Sum_Of_Functions([f, constant_function])
 end
-function -(f::PE_Function, number::Float64)
+function -(f::PE_Function, number::Real)
     return +(f, -number)
 end
-function *(f::PE_Function, number::Float64)
+function *(f::PE_Function, number::Real)
     return PE_Function(f.a_*number, f.b_, f.base_, f.d_)
 end
-function /(f::PE_Function, number::Float64)
+function /(f::PE_Function, number::Real)
     return *(f, 1/number )
-end
-
-function +(f::PE_Function, number::Integer)
-    number_as_float = convert(Float64, number)
-    return +(f, number_as_float)
-end
-function -(f::PE_Function, number::Integer)
-    number_as_float = convert(Float64, number)
-    return -(f, number_as_float)
-end
-function *(f::PE_Function, number::Integer)
-    number_as_float = convert(Float64, number)
-    return *(f, number_as_float)
-end
-function /(f::PE_Function, number::Integer)
-    number_as_float = convert(Float64, number)
-    return /(f, number_as_float)
 end
 
 function +(f1::PE_Function, f2::PE_Function)
