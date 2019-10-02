@@ -32,7 +32,7 @@ all(abs.(evaluate.(Ref(left_const), x_float .- tol) .- evaluate.(Ref(right_const
 xx = Array{Month,1}([Month(1), Month(2), Month(3)])
 xx2 = Array{DatePeriod,1}([Month(1), Month(2), Year(1)])
 yy = [1,2,3]
-abs(evaluate(create_constant_interpolation_to_left(xx,yy), Day(45)) - 2.0) < eps()
+abs(create_constant_interpolation_to_left(xx,yy)(Day(45)) - 2.0) < eps()
 abs(evaluate(create_constant_interpolation_to_right(xx,yy), Day(15)) - 1.0) < eps()
 abs(evaluate(create_linear_interpolation(xx,yy), Month(1)) - 1.0) < eps()
 abs(evaluate(create_quadratic_spline(xx,yy), Month(2)) - 2.0) < eps()
