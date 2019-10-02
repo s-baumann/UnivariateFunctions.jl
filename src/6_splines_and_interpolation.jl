@@ -24,7 +24,7 @@ function create_quadratic_spline(schum::Schumaker)
     return Piecewise_Function(starts_, funcs_)
 end
 
-function create_quadratic_spline(x::Union{Array{D,1},Array{DatePeriod,1}},y::Array{<:Real,1}; gradients::Union{Missing,Array{<:Real,1}} = missing, extrapolation::Schumaker_ExtrapolationSchemes = (Curve,Curve),
+function create_quadratic_spline(x::Union{Array{D,1},Array{<:DatePeriod,1}},y::Array{<:Real,1}; gradients::Union{Missing,Array{<:Real,1}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
                                  left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing) where D<:DatePeriod
     x_as_Floats = period_length.(x)
     return create_quadratic_spline(x_as_Floats, y; gradients = gradients, extrapolation = extrapolation, left_gradient = left_gradient, right_gradient = right_gradient)
@@ -42,7 +42,7 @@ function create_constant_interpolation_to_right(x::Array{<:Real,1},y::Array{<:Re
     return Piecewise_Function(x_, funcs_)
 end
 
-function create_constant_interpolation_to_right(x::Union{Array{D,1},Array{DatePeriod,1}},y::Array{<:Real,1}) where D<:DatePeriod
+function create_constant_interpolation_to_right(x::Union{Array{D,1},Array{<:DatePeriod,1}},y::Array{<:Real,1}) where D<:DatePeriod
     x_as_Floats = period_length.(x)
     return create_constant_interpolation_to_right(x_as_Floats,y)
 end
@@ -58,7 +58,7 @@ function create_constant_interpolation_to_left(x::Array{<:Real,1},y::Array{<:Rea
     return Piecewise_Function(x_, funcs_)
 end
 
-function create_constant_interpolation_to_left(x::Union{Array{D,1},Array{DatePeriod,1}},y::Array{<:Real,1}) where D<:DatePeriod
+function create_constant_interpolation_to_left(x::Union{Array{D,1},Array{<:DatePeriod,1}},y::Array{<:Real,1}) where D<:DatePeriod
     x_as_Floats = period_length.(x)
     return create_constant_interpolation_to_left(x_as_Floats,y)
 end
@@ -68,7 +68,7 @@ function create_linear_interpolation(x::Array{Date,1},y::Array{<:Real,1})
     return create_linear_interpolation(x_Float,y)
 end
 
-function create_linear_interpolation(x::Union{Array{D,1},Array{DatePeriod,1}},y::Array{<:Real,1}) where D<:DatePeriod
+function create_linear_interpolation(x::Union{Array{D,1},Array{<:DatePeriod,1}},y::Array{<:Real,1}) where D<:DatePeriod
     x_as_Floats = period_length.(x)
     return create_linear_interpolation(x_as_Floats,y)
 end

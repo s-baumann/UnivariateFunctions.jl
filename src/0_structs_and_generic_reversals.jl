@@ -230,6 +230,9 @@ function evaluate(f::UnivariateFunction, d::Date)
     date_in_relation_to_global_base = years_from_global_base(d)
     return evaluate(f, date_in_relation_to_global_base)
 end
+function evaluate(f::UnivariateFunction, x::DatePeriod)
+    return evaluate(f, period_length(x))
+end
 
 function ^(f1::UnivariateFunction,num::Integer) # This will get overridden for undefined and zeros.
     if num < 0

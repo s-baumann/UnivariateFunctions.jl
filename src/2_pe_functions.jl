@@ -4,7 +4,7 @@ function evaluate(f::PE_Function, x::Real)
     diff = x - f.base_
     return f.a_ * exp(f.b_ * diff) * (diff)^f.d_
 end
-function (s::PE_Function)(x::Union{Real,Date})
+function (s::PE_Function)(x::Union{Real,Date,DatePeriod})
     return evaluate(s, x)
 end
 

@@ -1,10 +1,10 @@
 import Base.+, Base.-, Base./, Base.*, Base.^
 import SchumakerSpline.evaluate
-function evaluate(f::Undefined_Function, point::Real)
+function evaluate(f::Undefined_Function, point::Union{Real,Date,DatePeriod})
     missing
 end
-function (s::Undefined_Function)(x::Union{Real,Date})
-    return evaluate(s, x)
+function (s::Undefined_Function)(x::Union{Real,Date,DatePeriod})
+    return missing
 end
 
 function derivative(f::Undefined_Function)
