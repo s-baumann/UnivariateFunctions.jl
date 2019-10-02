@@ -17,3 +17,10 @@ end
 function years_from_global_base(a::Dates.Day)
     return years_between(a, global_base_date_as_day)
 end
+
+"""
+    Period length is designed to convert TimePeriod objects to a float in a consistent way to years_from_global_base
+"""
+function period_length(a::Dates.DatePeriod, base::Date = global_base_date)
+    return years_between(base+a, base)
+end
