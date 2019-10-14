@@ -4,7 +4,7 @@ function evaluate(f::Piecewise_Function, point::Real)
     which_function = searchsortedlast(f.starts_, point)
     return evaluate(f.functions_[which_function], point)
 end
-function (s::Piecewise_Function)(x::Union{Real,Date,DatePeriod})
+function (s::Piecewise_Function)(x::Union{Real,Date,DateTime,DatePeriod})
     return evaluate(s, x)
 end
 

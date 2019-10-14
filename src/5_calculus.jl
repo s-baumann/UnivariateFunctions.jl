@@ -7,7 +7,7 @@ function right_integral(f::UnivariateFunction, left::Real)
     return indef_int - left_constant
 end
 
-function right_integral(f::UnivariateFunction, left::Date)
+function right_integral(f::UnivariateFunction, left::Union{Date,DateTime})
     left_float = years_from_global_base(left)
     return right_integral(f, left_float)
 end
@@ -46,7 +46,7 @@ function left_integral(f::UnivariateFunction, right::Real)
     return right_constant - indef_int
 end
 
-function left_integral(f::UnivariateFunction, right::Date)
+function left_integral(f::UnivariateFunction, right::Union{Date,DateTime})
     right_float = years_from_global_base(right)
     return left_integral(f, right_float)
 end
@@ -86,7 +86,7 @@ function evaluate_integral(f::UnivariateFunction,left::Real, right::Real)
     return (right_eval - left_eval)
 end
 
-function evaluate_integral(f::UnivariateFunction,left::Date, right::Date)
+function evaluate_integral(f::UnivariateFunction,left::Union{Date,DateTime}, right::Union{Date,DateTime})
     left_as_float  = years_from_global_base(left)
     right_as_float = years_from_global_base(right)
     return evaluate_integral(f, left_as_float, right_as_float)

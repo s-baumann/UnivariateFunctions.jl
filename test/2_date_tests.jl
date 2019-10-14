@@ -19,3 +19,15 @@ l_int = left_integral(pe_func, today)
 (evaluate(l_int, date_in_2020) - evaluate_integral(pe_func,today,date_in_2020)) < tol
 r_int = right_integral(pe_func, date_in_2020)
 (evaluate(r_int, today) - evaluate_integral(pe_func,today,date_in_2020)) < tol
+
+# With DateTimes
+today_time = DateTime(2000,1,1, 10, 10, 1)
+pe_func = PE_Function(1.0,2.0,today_time, 3)
+
+
+# left and right integrals
+later_today = DateTime(2000,1,1, 10, 14, 1)
+l_int = left_integral(pe_func, today)
+(evaluate(l_int, later_today) - evaluate_integral(pe_func,today,later_today)) < tol
+r_int = right_integral(pe_func, later_today)
+(evaluate(r_int, today) - evaluate_integral(pe_func,today,later_today)) < tol

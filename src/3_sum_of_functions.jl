@@ -7,7 +7,7 @@ function evaluate(sf::Sum_Of_Functions, point::Real)
     end
     return total
 end
-function (s::Sum_Of_Functions)(x::Union{Real,Date,DatePeriod})
+function (s::Sum_Of_Functions)(x::Union{Real,Date,DateTime,DatePeriod})
     return evaluate(s, x)
 end
 

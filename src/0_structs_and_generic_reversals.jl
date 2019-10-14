@@ -26,7 +26,7 @@ struct PE_Function{F<:Real,I<:Integer} <: UnivariateFunction
             return new{promo_type,I}(promo_type(a_),promo_type(b_),promo_type(base_),I(d_))
         end
     end
-    function PE_Function(a_::R,b_::S,base_::Date,d_::I) where R<:Real where S<:Real where I<:Real
+    function PE_Function(a_::R,b_::S,base_::Union{Date,DateTime},d_::I) where R<:Real where S<:Real where I<:Real
         new_base_ = years_from_global_base(base_)
         return PE_Function(a_, b_, new_base_, d_)
     end
@@ -69,14 +69,14 @@ struct Piecewise_Function <: UnivariateFunction
         starts_without_pw_parts, functions_without_pw_parts = deal_with_piecewise_inputs(starts, functions)
         new(starts_without_pw_parts, functions_without_pw_parts)
     end
-    function Piecewise_Function(starts::Array{Date,1}, functions::Array)
+    function Piecewise_Function(starts::Union{Array{DateTime,1},Array{Date,1},Array{Union{DateTime,Date},1}}, functions::Array)
         starts_ = years_from_global_base.(starts)
         return Piecewise_Function(starts_, functions)
     end
     function Piecewise_Function(start::Real, func)
         return Piecewise_Function([start], [func])
     end
-    function Piecewise_Function(start::Date, func)
+    function Piecewise_Function(start::Union{Date,DateTime}, func)
         start_float = years_from_global_base(start)
         return Piecewise_Function(start_float, func)
     end
@@ -226,7 +226,7 @@ function ^(number::Real, f::UnivariateFunction)
     error("It is not possible yet to raise to the power of a UnivariateFunctions")
 end
 
-function evaluate(f::UnivariateFunction, d::Date)
+function evaluate(f::UnivariateFunction, d::Union{Date,DateTime})
     date_in_relation_to_global_base = years_from_global_base(d)
     return evaluate(f, date_in_relation_to_global_base)
 end

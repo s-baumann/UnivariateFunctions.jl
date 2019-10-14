@@ -28,7 +28,7 @@ function create_ols_approximation(y::Array{<:Real,1}, x::Array{<:Real,1}, base_x
     return Sum_Of_Functions(func_array)
 end
 
-function create_ols_approximation(y::Array{<:Real,1}, x::Array{Date,1}, base_x::Date = global_base_date, degree::Integer = 1, intercept::Bool = true)
+function create_ols_approximation(y::Array{<:Real,1}, x::Union{Array{DateTime,1},Array{Date,1},Array{Union{Date,DateTime},1}}, base_x::Union{Date,DateTime} = global_base_date, degree::Integer = 1, intercept::Bool = true)
     base = years_from_global_base.(base_x)
     xx   = years_from_global_base.(x)
     return create_ols_approximation(y, xx, base, degree, intercept)
