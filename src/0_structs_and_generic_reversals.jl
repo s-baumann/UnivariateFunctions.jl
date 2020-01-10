@@ -12,6 +12,9 @@ struct PE_Function{F<:Real,I<:Integer} <: UnivariateFunction
     b_::F
     base_::F
     d_::I
+    function PE_Function(a_::Real)
+        return PE_Function(a_, 0.0, 0.0, 0)
+    end
     function PE_Function(a_::R,b_::S,base_::T,d_::I) where R<:Real where S<:Real where T<:Real where I<:Integer
         promo_type = promote_type(T,S,T)
         if d_ < 0
