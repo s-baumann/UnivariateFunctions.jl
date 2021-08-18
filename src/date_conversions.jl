@@ -7,17 +7,10 @@ function years_between(a::Union{DateTime,Date}, b::Union{DateTime,Date})
     return (Dates.days(a) -Dates.days(b))/ days_per_year
 end
 
-function years_between(a::Dates.Day, b::Dates.Day)
-    return (convert(Int, a)-convert(Int, b))/ days_per_year
-end
-
 function years_from_global_base(a::Union{DateTime,Date})
     return years_between(a, global_base_date)
 end
 
-function years_from_global_base(a::Dates.Day)
-    return years_between(a, global_base_date_as_day)
-end
 
 """
     Period length is designed to convert TimePeriod objects to a float in a consistent way to years_from_global_base
