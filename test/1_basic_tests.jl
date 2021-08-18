@@ -186,3 +186,32 @@ typeof(convert_to_linearly_rescale_inputs(Undefined_Function(), alpha, beta)) ==
 sumFunc = test_func + pe_exp_quad + pe_exp
 converted_sumFunc = convert_to_linearly_rescale_inputs(sumFunc, alpha, beta)
 abs(evaluate(sumFunc, inp) - evaluate(converted_sumFunc, rescaled_input)) < 1e-10
+
+
+
+### Test undefined
+und = Undefined_Function()
+und + und == missing
+und - und == missing
+und / und == missing
+und * und == missing
+
+# PE_Function
+f1 + und == missing
+f1 - und == missing
+f1 / und == missing
+f1 * und == missing
+und + f1 == missing
+und - f1 == missing
+und / f1 == missing
+und * f1 == missing
+
+# Sum_Of_Functions
+sum0 + und == missing
+sum0 - und == missing
+sum0 / und == missing
+sum0 * und == missing
+und + sum0 == missing
+und - sum0 == missing
+und / sum0 == missing
+und * sum0 == missing

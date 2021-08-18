@@ -113,3 +113,14 @@ f4_converted = convert_to_linearly_rescale_inputs(f4, alpha, beta)
 y = evaluate.(f4,X)
 converted_y = evaluate.(f4_converted, X_converted)
 sum(abs.(y .- converted_y)) < 1e-10
+
+# Testing with Undefined
+und = Undefined_Function()
+sum0 + und == missing
+sum0 - und == missing
+sum0 / und == missing
+sum0 * und == missing
+und + sum0 == missing
+und - sum0 == missing
+und / sum0 == missing
+und * sum0 == missing
