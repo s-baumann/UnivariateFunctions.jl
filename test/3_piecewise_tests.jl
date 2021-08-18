@@ -116,11 +116,11 @@ sum(abs.(y .- converted_y)) < 1e-10
 
 # Testing with Undefined
 und = Undefined_Function()
-sum0 + und == missing
-sum0 - und == missing
-sum0 / und == missing
-sum0 * und == missing
-und + sum0 == missing
-und - sum0 == missing
-und / sum0 == missing
-und * sum0 == missing
+ismissing(sum0 + und)
+ismissing(sum0 - und)
+ismissing(sum0 / und)
+ismissing(sum0 * und)
+ismissing(und + sum0)
+ismissing(und - sum0)
+ismissing(und / sum0)
+ismissing(und * sum0) 

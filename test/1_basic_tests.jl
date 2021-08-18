@@ -191,27 +191,27 @@ abs(evaluate(sumFunc, inp) - evaluate(converted_sumFunc, rescaled_input)) < 1e-1
 
 ### Test undefined
 und = Undefined_Function()
-und + und == missing
-und - und == missing
-und / und == missing
-und * und == missing
+ismissing(und + und)
+ismissing(und - und)
+ismissing(und / und)
+ismissing(und * und)
 
 # PE_Function
-f1 + und == missing
-f1 - und == missing
-f1 / und == missing
-f1 * und == missing
-und + f1 == missing
-und - f1 == missing
-und / f1 == missing
-und * f1 == missing
+ismissing(f1 + und)
+ismissing(f1 - und)
+ismissing(f1 / und)
+ismissing(f1 * und)
+ismissing(und + f1)
+ismissing(und - f1)
+ismissing(und / f1)
+ismissing(und * f1)
 
 # Sum_Of_Functions
-sum0 + und == missing
-sum0 - und == missing
-sum0 / und == missing
-sum0 * und == missing
-und + sum0 == missing
-und - sum0 == missing
-und / sum0 == missing
-und * sum0 == missing
+ismissing(sum0 + und)
+ismissing(sum0 - und)
+ismissing(sum0 / und)
+ismissing(sum0 * und)
+ismissing(und + sum0)
+ismissing(und - sum0)
+ismissing(und / sum0)
+ismissing(und * sum0)
