@@ -191,27 +191,27 @@ abs(evaluate(sumFunc, inp) - evaluate(converted_sumFunc, rescaled_input)) < 1e-1
 
 ### Test undefined
 und = Undefined_Function()
-ismissing(und + und)
-ismissing(und - und)
-ismissing(und / und)
-ismissing(und * und)
+typeof(und + und)  == Undefined_Function
+typeof(und - und)  == Undefined_Function
+typeof(und / und)  == Undefined_Function
+typeof(und * und)  == Undefined_Function
 
 # PE_Function
-ismissing(f1 + und)
-ismissing(f1 - und)
-ismissing(f1 / und)
-ismissing(f1 * und)
-ismissing(und + f1)
-ismissing(und - f1)
-ismissing(und / f1)
-ismissing(und * f1)
+typeof(f1 + und)  == Undefined_Function
+typeof(f1 - und)  == Undefined_Function
+typeof(f1 / und)  == Undefined_Function
+typeof(f1 * und)  == Undefined_Function
+typeof(und + f1)  == Undefined_Function
+typeof(und - f1)  == Undefined_Function
+typeof(und / f1)  == Undefined_Function
+typeof(und * f1)  == Undefined_Function
 
 # Sum_Of_Functions
-ismissing(sum0 + und)
-ismissing(sum0 - und)
-ismissing(sum0 / und)
-ismissing(sum0 * und)
-ismissing(und + sum0)
-ismissing(und - sum0)
-ismissing(und / sum0)
-ismissing(und * sum0)
+typeof(sum0 + und)  == Undefined_Function
+typeof(sum0 - und)  == Undefined_Function
+typeof(sum0 / und)  == Undefined_Function
+typeof(sum0 * und)  == Undefined_Function
+typeof(und + sum0)  == Undefined_Function
+typeof(und - sum0)  == Undefined_Function
+typeof(und / sum0)  == Undefined_Function
+typeof(und * sum0)  == Undefined_Function
