@@ -2,7 +2,7 @@
 
 | Build | Coverage |
 |-------|----------|
-| [![Build status](https://github.com/s-baumann/UnivariateFunctions.jl/workflows/CI/badge.svg)](https://github.com/s-baumann/UnivariateFunctions.jl/actions) | [![codecov](https://codecov.io/gh/s-baumann/UnivariateFunctions.jl/branch/main/graph/badge.svg?token=sElLVJgRel)](https://codecov.io/gh/s-baumann/UnivariateFunctions.jl) |
+| [![Build status](https://github.com/s-baumann/UnivariateFunctions.jl/workflows/CI/badge.svg)](https://github.com/s-baumann/UnivariateFunctions.jl/actions) | [![codecov](https://codecov.io/gh/s-baumann/UnivariateFunctions.jl/branch/master/graph/badge.svg?token=uO1mDGPfML)](https://codecov.io/gh/s-baumann/UnivariateFunctions.jl) |
 
 This implements single algebra and evaluation on simple univariate functions.
 There are a few ways in which it can be used.
