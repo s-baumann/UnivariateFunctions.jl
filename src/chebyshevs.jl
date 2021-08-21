@@ -38,8 +38,3 @@ function get_chevyshevs_up_to(num::Integer, first_kind::Bool = true)
     end
     return chebyshevs
 end
-
-function get_chebyshev(num::Integer, first_kind::Bool = true)
-    chebyshevs = get_chevyshev_up_to(num, first_kind)
-    return chebyshevs[num]
-end
