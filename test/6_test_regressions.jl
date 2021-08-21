@@ -76,3 +76,14 @@ X = convert(Array{Float64,1}, left:0.01:right)
 y = func.(X)
 y_approx = evaluate.(Ref(approxim), X)
 maximum(abs.(y .- y_approx)) < 0.01
+
+# Getting Chebyshevs
+first_kinds = get_chevyshevs_up_to(4,true)
+length(first_kinds) == 4
+second_kinds = get_chevyshevs_up_to(4,false)
+length(second_kinds) == 4
+
+first_kinds = get_chevyshevs_up_to(25,true)
+length(first_kinds) == 25
+second_kinds = get_chevyshevs_up_to(25,false)
+length(second_kinds) == 25

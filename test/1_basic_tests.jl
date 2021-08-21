@@ -225,3 +225,25 @@ typeof(und + sum0)  == Undefined_Function
 typeof(und - sum0)  == Undefined_Function
 typeof(und / sum0)  == Undefined_Function
 typeof(und * sum0)  == Undefined_Function
+typeof(und + und)  == Undefined_Function
+typeof(und - und)  == Undefined_Function
+typeof(und / und)  == Undefined_Function
+typeof(und * und)  == Undefined_Function
+
+# Numbers
+typeof(und + 4)  == Undefined_Function
+typeof(und - 4)  == Undefined_Function
+typeof(und / 4)  == Undefined_Function
+typeof(und * 4)  == Undefined_Function
+typeof(und ^ 4)  == Undefined_Function
+typeof(4 + und)  == Undefined_Function
+typeof(4 - und)  == Undefined_Function
+typeof(4 * und)  == Undefined_Function
+
+typeof(und + 4.0)  == Undefined_Function
+typeof(und - 4.0)  == Undefined_Function
+typeof(und / 4.0)  == Undefined_Function
+typeof(und * 4.0)  == Undefined_Function
+typeof(4.0 + und)  == Undefined_Function
+typeof(4.0 - und)  == Undefined_Function
+typeof(4.0 * und)  == Undefined_Function

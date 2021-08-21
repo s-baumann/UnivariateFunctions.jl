@@ -140,3 +140,5 @@ typeof(und + sum0) == Undefined_Function
 typeof(und - sum0) == Undefined_Function
 typeof(und / sum0) == Undefined_Function
 typeof(und * sum0) == Undefined_Function
+typeof(und / f5) == Undefined_Function
+typeof(f5 / und) == Undefined_Function
