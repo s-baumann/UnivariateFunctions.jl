@@ -86,15 +86,6 @@ struct Piecewise_Function <: UnivariateFunction
 end
 Base.broadcastable(e::Piecewise_Function) = Ref(e)
 
-
-
-function sort(funcs::Array{PE_Function,1})
-    len = length(funcs)
-    attributes = hcat(map(f -> f.d_, funcs), map(f -> f.base_, funcs), map(f -> f.b_, funcs) )
-    ordering = convert(Array{Int}, sortslices(hcat(attributes, 1:len) , dims = 1)[:,4])
-    return funcs[ordering]
-end
-
 function trim_piecewise_function(func::Piecewise_Function, left_limit::Real, right_limit::Real)
     if func.starts_[1] != -Inf
         starts_ = [-Inf, left_limit, right_limit]
@@ -104,7 +95,6 @@ function trim_piecewise_function(func::Piecewise_Function, left_limit::Real, rig
         funcs_  = [func, Undefined_Function()]
     end
     return Piecewise_Function(starts_, funcs_)
-
 end
 
 function deal_with_piecewise_inputs(starts::Array{<:Real,1}, functions::Array)

@@ -1,6 +1,11 @@
 using UnivariateFunctions
 const tol = 10*eps()
 
+# Make undefined function
+und = Undefined_Function()
+results = und.([5]) # Test broadcasting
+ismissing(results[1])
+
 # pe functions
 function test_pe(a::Float64,b::Float64,base::Float64,d::Int,x::Float64)
     return a * exp(b*(x-base)) * (x-base)^d
@@ -11,14 +16,18 @@ abs(evaluate(f1, 5.0) - f1_test_result) < tol
 f2 = PE_Function(0.0, 2.0,3.0, 4)
 f2_test_result = 0.0
 abs(evaluate(f2, 5.0) - f2_test_result) < tol
-f3 = PE_Function(1.0, 8.0,7.0, 8)
+f3 = PE_Function{Float64,Int64}(1.0, 8.0,7.0, 8)
 f3_test_result = test_pe(1.0, 8.0,7.0, 8,5.0)
 abs(f3(5.0) - f3_test_result) < tol
+f4 = PE_Function(1.0)
+f4_test_result = test_pe(1.0, 0.0,0.0, 0,5.0)
+abs(f4(5.0) - f4_test_result) < tol
 
 # Sum of functions
 sum0 =  Sum_Of_Functions([])
 typeof(sum0) == UnivariateFunctions.Sum_Of_Functions
 sum1 =  Sum_Of_Functions([f1])
+sum1 = Sum_Of_Functions(sum1)
 typeof(sum1) == UnivariateFunctions.Sum_Of_Functions
 sum3 =  Sum_Of_Functions([f2,f3])
 typeof(sum3) == UnivariateFunctions.Sum_Of_Functions
@@ -31,6 +40,8 @@ length(sum5.functions_) == 2
 abs(sum1(5.0) - f1_test_result) < tol
 abs(evaluate(sum5, 5.0) - 2*f3_test_result - f1_test_result) < 100* tol
 abs(evaluate(sum0, 5.0)) < tol
+sum6 =  Sum_Of_Functions([sum3, sum4, und])
+typeof(sum6)  == Undefined_Function
 
 fl = 8.9
 integ = 7
@@ -190,7 +201,6 @@ abs(evaluate(sumFunc, inp) - evaluate(converted_sumFunc, rescaled_input)) < 1e-1
 
 
 ### Test undefined
-und = Undefined_Function()
 typeof(und + und)  == Undefined_Function
 typeof(und - und)  == Undefined_Function
 typeof(und / und)  == Undefined_Function

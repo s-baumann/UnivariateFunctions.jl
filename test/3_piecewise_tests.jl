@@ -1,4 +1,5 @@
 using UnivariateFunctions
+using Dates
 
 tol = 10*eps()
 
@@ -8,6 +9,13 @@ before = PE_Function(0.0,0.0,0.0,1)
 first_ = PE_Function(1.0,0.0,0.0,1)
 second= PE_Function(20.0,0.0,0.0,2)
 last_  = Sum_Of_Functions([first_, second])
+
+f0 = Piecewise_Function([-1.0,3.0, 10.0], [before, first_, second])
+!ismissing(f0(-0.75))
+f0 = trim_piecewise_function(f0, -0.5, 9.0)
+ismissing(f0(-0.75))
+f0 = Piecewise_Function([-Inf,3.0, 10.0], [before, first_, second])
+!ismissing(f0(-0.75))
 
 f1 = Piecewise_Function([-Inf, -1.0,3.0, 10.0], [before, first_, second, last_])
 abs(evaluate(f1, -10.0) - 0.0 ) < tol
@@ -33,6 +41,14 @@ isa(f4.functions_[4], UnivariateFunctions.PE_Function)
 isa(f4.functions_[5], UnivariateFunctions.PE_Function)
 isa(f4.functions_[6], UnivariateFunctions.PE_Function)
 isa(f4.functions_[7], UnivariateFunctions.Sum_Of_Functions)
+
+# Testing the other Piecewise_Function constructors
+f5 = Piecewise_Function(Date(2020,05,01), second)
+ismissing(f5(Date(2019,05,01)))
+f6 = Piecewise_Function([Date(2020,05,01)], [second])
+ismissing(f6(Date(2019,05,01)))
+f7 = Piecewise_Function([77.0, Inf], [second, second])
+ismissing(f7(Date(2019,05,01)))
 
 function test_result(func, eval0, eval5, len = 1)
     val_test0 = abs(evaluate(func, 0.0) - eval0) < 1e-09
