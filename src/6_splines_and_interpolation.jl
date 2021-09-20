@@ -81,7 +81,7 @@ function create_constant_interpolation_to_right(x::Vector{<:Real},y::Vector{<:Re
     funcs_ = PE_Function.(y,0.0,0.0,0)
     return Piecewise_Function(x_, funcs_)
 end
-function create_constant_interpolation_to_right(x::Union{Vector{D1},Vector{<:DatePeriod}},y::Vector{<:Real}) where D<:DatePeriod
+function create_constant_interpolation_to_right(x::Union{Vector{D},Vector{<:DatePeriod}},y::Vector{<:Real}) where D<:DatePeriod
     x_as_Floats = period_length.(x)
     return create_constant_interpolation_to_right(x_as_Floats,y)
 end
