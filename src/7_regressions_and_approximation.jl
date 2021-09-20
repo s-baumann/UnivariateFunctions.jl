@@ -1,4 +1,20 @@
-function create_ols_approximation(y::Array{<:Real,1}, x::Array{<:Real,1}, base_x::Real = 0.0, degree::Integer = 1, intercept::Bool = true)
+
+"""
+    create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::Real = 0.0, degree::Integer = 1, intercept::Bool = true)
+    create_ols_approximation(y::Vector{<:Real}, x::Union{Vector{DateTime},Vector{Date},Vector{Union{Date,DateTime}}}, base_x::Union{Date,DateTime} = global_base_date, degree::Integer = 1, intercept::Bool = true)
+
+An approximation function calculated via OLS.
+
+### Inputs
+* `y` - A `Vector` with the y coordinates
+* `x` - A `Vector` with the x coordinates
+* `base_x` - A real that offsets the x. So a coordinate with x value of 2.0 will be converted to 1.8 if base_x is 0.2.
+* `degree` - What the highest power of x should be. So if this is 3 then the equation will have x, x^2, x^3 as predictors.
+* `intercept` - Should there be an x intercept.
+### Returns
+* A `Sum_Of_Functions` containing the approximation function.
+"""
+function create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::Real = 0.0, degree::Integer = 1, intercept::Bool = true)
     obs = length(y)
     if degree < 0
         error("Cannot approximate with OLS with a degree that is negative")
@@ -28,18 +44,32 @@ function create_ols_approximation(y::Array{<:Real,1}, x::Array{<:Real,1}, base_x
     return Sum_Of_Functions(func_array)
 end
 
-function create_ols_approximation(y::Array{<:Real,1}, x::Union{Array{DateTime,1},Array{Date,1},Array{Union{Date,DateTime},1}}, base_x::Union{Date,DateTime} = global_base_date, degree::Integer = 1, intercept::Bool = true)
+function create_ols_approximation(y::Vector{<:Real}, x::Union{Vector{DateTime},Vector{Date},Vector{Union{Date,DateTime}}}, base_x::Union{Date,DateTime} = global_base_date, degree::Integer = 1, intercept::Bool = true)
     base = years_from_global_base.(base_x)
     xx   = years_from_global_base.(x)
     return create_ols_approximation(y, xx, base, degree, intercept)
 end
 
-function get_cholesky_coefficients(chebyshev::Sum_Of_Functions, y::Array{<:Real,1}, unnormalised_nodes::Array{<:Real,1})
+function get_cholesky_coefficients(chebyshev::Sum_Of_Functions, y::Vector{<:Real}, unnormalised_nodes::Vector{<:Real})
     chebyshev_on_nodes = evaluate.(Ref(chebyshev), unnormalised_nodes)
     a = sum(y .* chebyshev_on_nodes) / sum(chebyshev_on_nodes .^ 2)
     return a
 end
 
+"""
+    create_chebyshev_approximation(func::Function, nodes::Integer, degree::Integer, left::Real, right::Real)
+
+An function that will approximate another function via Chebyshev polynomials.
+
+### Inputs
+* `func` - A function that you want to approximation
+* `nodes` - The number of approximation nodes
+* `degree` - The degree of the Chebyshev polynomials.
+* `left` - The left limit of the approximation
+* `right` - The right limit of the approximation.
+### Returns
+* A `Sum_Of_Functions` containing the approximation function.
+"""
 function create_chebyshev_approximation(func::Function, nodes::Integer, degree::Integer, left::Real, right::Real)
     # This is all after Algorithm 6.2 from Judd (1998) Numerical Methods in Economics.
     if nodes <= degree

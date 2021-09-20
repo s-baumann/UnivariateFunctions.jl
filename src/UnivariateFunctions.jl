@@ -6,7 +6,7 @@ using GLM
 
 # This includes timing functions for use of UnivariateFunctions with dates.
 include("date_conversions.jl")
-export years_between, years_from_global_base
+export years_between, years_from_global_base, period_length
 # The abstrat type UnivariateFunction and all structs are implemented here.
 # In addition we have operator reversals and some supporting functions.
 include("0_structs_and_generic_reversals.jl")

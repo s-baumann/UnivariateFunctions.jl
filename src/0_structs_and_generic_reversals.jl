@@ -1,11 +1,32 @@
 import Base.+, Base.-, Base./, Base.*, Base.^
 import Base.sort
 import SchumakerSpline.evaluate
+
+"""
+    UnivariateFunction
+An abstract type. The concrete structs that have been implemented are Undefined_Function,
+    PE_Function, Sum_Of_Functions, Piecewise_Function.
+"""
 abstract type UnivariateFunction end
 
+"""
+    Undefined_Function <: UnivariateFunction
+
+This function throws an error if you ever try to evaluate it.
+Think of it as doing the role of missing but for UnivariateFunctions
+"""
 struct Undefined_Function <: UnivariateFunction
 end
 Base.broadcastable(e::Undefined_Function) = Ref(e)
+
+"""
+    PE_Function{F<:Real,I<:Integer} <: UnivariateFunction
+
+This function has the functional form:
+    a exp(b(x-base)) (x-base)^d
+Where a,b,base are floats and d is a positive integer. These four are the
+ members of the struct.
+"""
 struct PE_Function{F<:Real,I<:Integer} <: UnivariateFunction
     # a exp(b(x-base)) (x-base)^d
     a_::F
@@ -38,6 +59,13 @@ struct PE_Function{F<:Real,I<:Integer} <: UnivariateFunction
     end
 end
 Base.broadcastable(e::PE_Function) = Ref(e)
+
+"""
+    Sum_Of_Functions <: UnivariateFunction
+
+This function contants a vector of UnivariateFunctions. When evaluted it
+adds the evaluations of these functions and returns the sum.
+"""
 struct Sum_Of_Functions <: UnivariateFunction
     functions_::Union{Array{PE_Function,1},Array{PE_Function{<:Real,<:Integer},1}}
     function Sum_Of_Functions(funcs::Sum_Of_Functions)
@@ -53,6 +81,14 @@ struct Sum_Of_Functions <: UnivariateFunction
     end
 end
 Base.broadcastable(e::Sum_Of_Functions) = Ref(e)
+
+"""
+    Piecewise_Function <: UnivariateFunction
+
+This function contants a vector of locations in the x space and a vector of UnivariateFunctions.
+When evaludated it uses these vectors as a lookup. It chooses the correct UnivariateFunction
+and evaluates it.
+"""
 struct Piecewise_Function <: UnivariateFunction
     starts_::Array{<:Real,1}
     functions_::Array{UnivariateFunction,1}
@@ -86,6 +122,19 @@ struct Piecewise_Function <: UnivariateFunction
 end
 Base.broadcastable(e::Piecewise_Function) = Ref(e)
 
+"""
+    trim_piecewise_function(func::Piecewise_Function, left_limit::Real, right_limit::Real)
+This trims the end of a piecewise function. So if there is a piecewise function
+with support between -10,10 then you can trim it to only have support between
+-5 and 5. Then if it is evaluated outside -5 to 5 it will be undefined.
+
+### Inputs
+* `func` - A Piecewise_Function.
+* `left_limit` - The left limit.
+* `right_limit` - The right limit.
+### Returns
+* A `Piecewise_Function`.
+"""
 function trim_piecewise_function(func::Piecewise_Function, left_limit::Real, right_limit::Real)
     if func.starts_[1] != -Inf
         starts_ = [-Inf, left_limit, right_limit]
@@ -219,6 +268,15 @@ function ^(number::Real, f::UnivariateFunction)
     error("It is not possible yet to raise to the power of a UnivariateFunctions")
 end
 
+"""
+    evaluate(f::UnivariateFunction, r::Real)
+    evaluate(f::UnivariateFunction, d::Union{Date,DateTime})
+    evaluate(f::UnivariateFunction, x::DatePeriod)
+
+This evaluates the function at the requested point. If a Date, DateTime is input
+then it is first converted to a scalar with the years_from_global_base function.
+`DatePeriod`s are converted with the period_length function.
+"""
 function evaluate(f::UnivariateFunction, d::Union{Date,DateTime})
     date_in_relation_to_global_base = years_from_global_base(d)
     return evaluate(f, date_in_relation_to_global_base)
@@ -245,7 +303,17 @@ function ^(f1::UnivariateFunction,num::Integer) # This will get overridden for u
     end
 end
 
+"""
+    change_base_of_PE_Function(f::PE_Function, new_base::Real)
+This changes the base of a PE_Function. So if the base was 2 then it can be
+converted to 3 with an additional constant term.
 
+### Inputs
+* `f` - A PE_Function.
+* `new_base` - The new base.
+### Returns
+* A `PE_Function` or a `Sum_Of_Functions`.
+"""
 function change_base_of_PE_Function(f::PE_Function, new_base::Real)
     old_base = f.base_
     diff = new_base - old_base
@@ -274,6 +342,17 @@ function change_base_of_PE_Function(f::PE_Function, new_base::Real)
 end
 
 # Conversions for linearly rescaling inputs.
+"""
+    convert_to_linearly_rescale_inputs(f::UnivariateFunction, alpha::Real, beta::Real)
+This alters a function so that whenever we put in x it is like we put in alpha x + beta.
+
+### Inputs
+* `f` - A UnivariateFunction.
+* `alpha` - The slope of the rescaling.
+* `beta` - The level of the rescaling.
+### Returns
+* A `UnivariateFunction` of the type that you input to the function.
+"""
 function convert_to_linearly_rescale_inputs(f::Undefined_Function, alpha::Real, beta::Real)
     return f
 end

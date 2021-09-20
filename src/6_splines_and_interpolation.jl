@@ -1,14 +1,41 @@
-function create_quadratic_spline(x::Union{Array{DateTime,1},Array{Date,1},Array{Union{Date,DateTime},1}},y::Array{<:Real,1} ; gradients::Union{Missing,Array{<:Real,1}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve), left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing)
+"""
+    create_quadratic_spline(x::Union{Vector{DateTime},Vector{Date},Vector{Union{Date,DateTime}}},y::Vector{<:Real} ; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
+                                 left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing)
+    create_quadratic_spline(x::Vector{<:Real},y::Vector{<:Real} ; gradients::Union{Missing,Array{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
+                                 left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing)
+    create_quadratic_spline(x::Union{Vector{D},Vector{<:DatePeriod}},y::Vector{<:Real}; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
+                                 left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing) where D<:DatePeriod
+Makes a quadratic shape-preserving interpolation spline using the SchumakerSpline.jl package. This is returned as a Piecewise_Function rather than as a Schumaker struct.
+
+### Inputs
+* `x` - A `Vector` with the x coordinates
+* `y` - A `Vector` with the y coordinates
+* `gradients` - A `Vector` with the gradiants at each x location. This is calculated if not provided.
+* `extrapolation` - A tuple of enum value describing how to extrapolate (on the left and right sides).
+* `left_gradient` - The gradiant to impose on the left edge (ie the first x coordinate).
+* `right_gradient` - The gradiant to impose on the right edge (ie the last x coordinate).
+### Returns
+* A `Piecewise_Function` containing the spline.
+
+
+    create_quadratic_spline(schum::Schumaker)
+This converts a spline represented by a SchumakerSpline.Schumaker struct into the same
+spline but represented by a Piecewise_Function.
+### Inputs
+* `schum` - A Schumaker struct.
+### Returns
+* A `Piecewise_Function` containing the spline.
+"""
+function create_quadratic_spline(x::Union{Vector{DateTime},Vector{Date},Vector{Union{Date,DateTime}}},y::Vector{<:Real} ; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve), left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing)
     x_as_Floats = years_from_global_base.(x)
     return create_quadratic_spline(x_as_Floats, y; gradients = gradients, extrapolation = extrapolation, left_gradient = left_gradient, right_gradient = right_gradient)
 end
 
-function create_quadratic_spline(x::Array{<:Real,1},y::Array{<:Real,1} ; gradients::Union{Missing,Array{<:Real,1}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
+function create_quadratic_spline(x::Vector{<:Real},y::Vector{<:Real} ; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
                                  left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing)
     schum = Schumaker(x, y; gradients = gradients, extrapolation = extrapolation, left_gradient = left_gradient, right_gradient = right_gradient)
     return create_quadratic_spline(schum)
 end
-
 function create_quadratic_spline(schum::Schumaker)
     starts_ = schum.IntStarts_
     coefficients = schum.coefficient_matrix_
@@ -23,57 +50,94 @@ function create_quadratic_spline(schum::Schumaker)
     end
     return Piecewise_Function(starts_, funcs_)
 end
-
-function create_quadratic_spline(x::Union{Array{D,1},Array{<:DatePeriod,1}},y::Array{<:Real,1}; gradients::Union{Missing,Array{<:Real,1}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
+function create_quadratic_spline(x::Union{Vector{D},Vector{<:DatePeriod}},y::Vector{<:Real}; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
                                  left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing) where D<:DatePeriod
     x_as_Floats = period_length.(x)
     return create_quadratic_spline(x_as_Floats, y; gradients = gradients, extrapolation = extrapolation, left_gradient = left_gradient, right_gradient = right_gradient)
 end
 
-function create_constant_interpolation_to_right(x::Array{Date,1},y::Array{<:Real,1})
+
+"""
+    create_constant_interpolation_to_right(x::Vector{Date},y::Vector{<:Real})
+    create_constant_interpolation_to_right(x::Vector{<:Real},y::Vector{<:Real})
+    create_constant_interpolation_to_right(x::Union{Vector{D},Vector{<:DatePeriod}},y::Vector{<:Real}) where D<:DatePeriod
+
+Makes a piecewise constant interpolation function. values from the left are copied to the right.
+
+### Inputs
+* `x` - A `Vector` with the x coordinates
+* `y` - A `Vector` with the y coordinates
+### Returns
+* A `Piecewise_Function` containing the interpolation function.
+"""
+function create_constant_interpolation_to_right(x::Vector{Date},y::Vector{<:Real})
     x_Float = years_from_global_base.(x)
     return create_constant_interpolation_to_right(x_Float,y)
 end
 
-function create_constant_interpolation_to_right(x::Array{<:Real,1},y::Array{<:Real,1})
+function create_constant_interpolation_to_right(x::Vector{<:Real},y::Vector{<:Real})
     x_ = vcat(-Inf,x)
     y = vcat(y[1], y)
     funcs_ = PE_Function.(y,0.0,0.0,0)
     return Piecewise_Function(x_, funcs_)
 end
-
-function create_constant_interpolation_to_right(x::Union{Array{D,1},Array{<:DatePeriod,1}},y::Array{<:Real,1}) where D<:DatePeriod
+function create_constant_interpolation_to_right(x::Union{Vector{D1},Vector{<:DatePeriod}},y::Vector{<:Real}) where D<:DatePeriod
     x_as_Floats = period_length.(x)
     return create_constant_interpolation_to_right(x_as_Floats,y)
 end
 
-function create_constant_interpolation_to_left(x::Array{Date,1},y::Array{<:Real,1})
+"""
+    create_constant_interpolation_to_left(x::Vector{Date},y::Vector{<:Real})
+    create_constant_interpolation_to_left(x::Vector{<:Real},y::Vector{<:Real})
+    create_constant_interpolation_to_left(x::Union{Vector{D},Vector{<:DatePeriod}},y::Vector{<:Real}) where D<:DatePeriod
+
+Makes a piecewise constant interpolation function. values from the right are copied to the left.
+
+### Inputs
+* `x` - A `Vector` with the x coordinates
+* `y` - A `Vector` with the y coordinates
+### Returns
+* A `Piecewise_Function` containing the interpolation function.
+"""
+function create_constant_interpolation_to_left(x::Vector{Date},y::Vector{<:Real})
     x_Float = years_from_global_base.(x)
     return create_constant_interpolation_to_left(x_Float,y)
 end
 
-function create_constant_interpolation_to_left(x::Array{<:Real,1},y::Array{<:Real,1})
+function create_constant_interpolation_to_left(x::Vector{<:Real},y::Vector{<:Real})
     x_ = vcat(-Inf,x[1:(length(x)-1)])
     funcs_ = PE_Function.(y,0.0,0.0,0)
     return Piecewise_Function(x_, funcs_)
 end
 
-function create_constant_interpolation_to_left(x::Union{Array{D,1},Array{<:DatePeriod,1}},y::Array{<:Real,1}) where D<:DatePeriod
+function create_constant_interpolation_to_left(x::Union{Vector{D},Vector{<:DatePeriod}},y::Vector{<:Real}) where D<:DatePeriod
     x_as_Floats = period_length.(x)
     return create_constant_interpolation_to_left(x_as_Floats,y)
 end
 
-function create_linear_interpolation(x::Array{Date,1},y::Array{<:Real,1})
+"""
+    create_linear_interpolation(x::Vector{Date},y::Vector{<:Real})
+    create_linear_interpolation(x::Union{Vector{D},Vector{<:DatePeriod}},y::Vector{<:Real}) where D<:DatePeriod
+    create_linear_interpolation(x::Vector{R},y::Vector{<:Real}) where R<:Real
+Makes a piecewise linear interpolation function. This is continuous.
+
+### Inputs
+* `x` - A `Vector` with the x coordinates
+* `y` - A `Vector` with the y coordinates
+### Returns
+* A `Piecewise_Function` containing the interpolation function.
+"""
+function create_linear_interpolation(x::Vector{Date},y::Vector{<:Real})
     x_Float = years_from_global_base.(x)
     return create_linear_interpolation(x_Float,y)
 end
 
-function create_linear_interpolation(x::Union{Array{D,1},Array{<:DatePeriod,1}},y::Array{<:Real,1}) where D<:DatePeriod
+function create_linear_interpolation(x::Union{Vector{D},Vector{<:DatePeriod}},y::Vector{<:Real}) where D<:DatePeriod
     x_as_Floats = period_length.(x)
     return create_linear_interpolation(x_as_Floats,y)
 end
 
-function create_linear_interpolation(x::Array{R,1},y::Array{<:Real,1}) where R<:Real
+function create_linear_interpolation(x::Vector{R},y::Vector{<:Real}) where R<:Real
     len = length(x)
     if len < 2
         error("Insufficient data to linearly interpolate")

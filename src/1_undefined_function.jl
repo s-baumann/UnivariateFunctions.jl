@@ -7,9 +7,28 @@ function (s::Undefined_Function)(x::Union{Real,Date,DateTime,DatePeriod})
     return missing
 end
 
+"""
+    derivative(f::UnivariateFunction)
+This calculates the derivative of the function and returns it as a UnivariateFunction.
+
+### Inputs
+* `f` - A UnivariateFunction.
+### Returns
+* A `UnivariateFunction`.
+"""
 function derivative(f::Undefined_Function)
     return f
 end
+
+"""
+    indefinite_integral(f::UnivariateFunction)
+This calculates the indefinite integral of a UnivariateFunction.
+
+### Inputs
+* `f` - A UnivariateFunction.
+### Returns
+* A `UnivariateFunction`.
+"""
 function indefinite_integral(f::Undefined_Function)
     return f
 end

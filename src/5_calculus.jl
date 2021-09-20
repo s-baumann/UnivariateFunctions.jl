@@ -1,6 +1,22 @@
 import SchumakerSpline.evaluate
 import SchumakerSpline.evaluate_integral
 
+"""
+    right_integral(f::UnivariateFunction, left::Real)
+    right_integral(f::UnivariateFunction, left::Union{Date,DateTime})
+
+This calculates the integral of a function from a left limit and returns it as a UnivariateFunction.
+So if you were to then evaluate this integral function at a point x then you would
+get the integral between left and x.
+
+If a Date, DateTime is input then it is first converted to a scalar with the years_from_global_base function.
+
+### Inputs
+* `f` - A UnivariateFunction.
+* `left` - A left limit (scalar)
+### Returns
+* A `UnivariateFunction`.
+"""
 function right_integral(f::UnivariateFunction, left::Real)
     indef_int = indefinite_integral(f)
     left_constant = evaluate(indef_int, left)
@@ -40,6 +56,22 @@ function right_integral(f::Piecewise_Function, left::R) where R<:Real
     return Piecewise_Function(starts_, functions_)
 end
 
+"""
+    left_integral(f::UnivariateFunction, right::Real)
+    left_integral(f::UnivariateFunction, right::Union{Date,DateTime})
+
+This calculates the integral of a function from a right limit and returns it as a UnivariateFunction.
+So if you were to then evaluate this integral function at a point x then you would
+get the integral between right and x.
+
+If a Date, DateTime is input then it is first converted to a scalar with the years_from_global_base function.
+
+### Inputs
+* `f` - A UnivariateFunction.
+* `right` - A right limit (scalar)
+### Returns
+* A `UnivariateFunction`.
+"""
 function left_integral(f::UnivariateFunction, right::Real)
     indef_int = indefinite_integral(f)
     right_constant = evaluate(indef_int, right)
@@ -78,14 +110,27 @@ function left_integral(f::Piecewise_Function, right::R) where R<:Real
     return Piecewise_Function(starts_, functions_)
 end
 
+"""
+    evaluate_integral(f::UnivariateFunction,left::Real, right::Real)
+    evaluate_integral(f::UnivariateFunction,left::Union{Date,DateTime}, right::Union{Date,DateTime})
 
+This calculates the integral of a function from a left limit to a right limit and returns a scalar.
+
+If a Date, DateTime is input then it is first converted to a scalar with the years_from_global_base function.
+
+### Inputs
+* `f` - A UnivariateFunction.
+* `left` - A left limit (scalar)
+* `right` - A right limit (scalar)
+### Returns
+* A `Real`.
+"""
 function evaluate_integral(f::UnivariateFunction,left::Real, right::Real)
     indef_int  = indefinite_integral(f)
     left_eval  = evaluate(indef_int, left)
     right_eval = evaluate(indef_int, right)
     return (right_eval - left_eval)
 end
-
 function evaluate_integral(f::UnivariateFunction,left::Union{Date,DateTime}, right::Union{Date,DateTime})
     left_as_float  = years_from_global_base(left)
     right_as_float = years_from_global_base(right)
