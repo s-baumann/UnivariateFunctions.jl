@@ -7,7 +7,6 @@ makedocs(
     pages = Any[
         "Introduction" => "description.md",
         "API" => "api.md"]
-    ]
 )
 
 deploydocs(

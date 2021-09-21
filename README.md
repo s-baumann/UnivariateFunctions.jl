@@ -1,10 +1,5 @@
 ﻿# UnivariateFunctions.jl
 
-| Build | Coverage |
-|-------|----------|
-
-
-
 | Build | Coverage | Documentation |
 |-------|----------|---------------|
 | [![Build status](https://github.com/s-baumann/UnivariateFunctions.jl/workflows/CI/badge.svg)](https://github.com/s-baumann/UnivariateFunctions.jl/actions) | [![codecov](https://codecov.io/gh/s-baumann/UnivariateFunctions.jl/branch/master/graph/badge.svg?token=uO1mDGPfML)](https://codecov.io/gh/s-baumann/UnivariateFunctions.jl) | [![docs-latest-img](https://img.shields.io/badge/docs-latest-blue.svg)](https://s-baumann.github.io/UnivariateFunctions.jl/dev/index.html) |
