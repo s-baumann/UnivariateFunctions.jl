@@ -1,5 +1,4 @@
 import Base.+, Base.-, Base./, Base.*, Base.^
-import Base.sort
 import SchumakerSpline.evaluate
 
 """

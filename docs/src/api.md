@@ -59,7 +59,6 @@ create_chebyshev_approximation
 ```@docs
 change_base_of_PE_Function
 trim_piecewise_function
-sort
 convert_to_linearly_rescale_inputs
 get_chevyshevs_up_to
 ```
