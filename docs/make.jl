@@ -4,9 +4,8 @@ makedocs(
     format = Documenter.HTML(),
     sitename = "UnivariateFunctions",
     modules = [UnivariateFunctions],
-    pages = Any[
-        "Introduction" => "description.md",
-        "API" => "api.md"]
+    pages = Any["Index" => "index.md",
+                "API" => "api.md"]
 )
 
 deploydocs(

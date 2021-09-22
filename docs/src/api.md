@@ -21,7 +21,9 @@ Piecewise_Function
 ### Function Evaluation and Calculus
 
 Note that in addition to the below functions the following operators:
-+, -, /, *, ^
+
+`+`, `-`, `\`, `*`, `^`
+
 have also been overloaded so that a function will be returned with the analytical
 sum, difference, product, quotient, power. The restrictions are that you cannot
 divide by a function (although you can divide by a scalar) and only positive
