@@ -3,8 +3,10 @@ const tol = 10*eps()
 
 # Make undefined function
 und = Undefined_Function()
-results = und.([5]) # Test broadcasting
+ismissing(und(5))
+results = und.([5, 9]) # Test broadcasting
 ismissing(results[1])
+ismissing(results[2])
 
 # pe functions
 function test_pe(a::Float64,b::Float64,base::Float64,d::Int,x::Float64)

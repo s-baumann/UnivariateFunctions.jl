@@ -272,9 +272,9 @@ end
     evaluate(f::UnivariateFunction, d::Union{Date,DateTime})
     evaluate(f::UnivariateFunction, x::DatePeriod)
 
-This evaluates the function at the requested point. If a Date, DateTime is input
-then it is first converted to a scalar with the years_from_global_base function.
-`DatePeriod`s are converted with the period_length function.
+This evaluates the function at the requested point. If a `Date`, `DateTime` is input
+then it is first converted to a scalar with the `years_from_global_base` function.
+`DatePeriod`s are converted with the `period_length` function.
 """
 function evaluate(f::UnivariateFunction, d::Union{Date,DateTime})
     date_in_relation_to_global_base = years_from_global_base(d)
@@ -304,11 +304,11 @@ end
 
 """
     change_base_of_PE_Function(f::PE_Function, new_base::Real)
-This changes the base of a PE_Function. So if the base was 2 then it can be
+This changes the base of a `PE_Function`. So if the base was 2 then it can be
 converted to 3 with an additional constant term.
 
 ### Inputs
-* `f` - A PE_Function.
+* `f` - A `PE_Function`.
 * `new_base` - The new base.
 ### Returns
 * A `PE_Function` or a `Sum_Of_Functions`.
@@ -343,10 +343,10 @@ end
 # Conversions for linearly rescaling inputs.
 """
     convert_to_linearly_rescale_inputs(f::UnivariateFunction, alpha::Real, beta::Real)
-This alters a function so that whenever we put in x it is like we put in alpha x + beta.
+This alters a function so that whenever we put in x it is like we put in $\alpha x + \beta$.
 
 ### Inputs
-* `f` - A UnivariateFunction.
+* `f` - A `UnivariateFunction`.
 * `alpha` - The slope of the rescaling.
 * `beta` - The level of the rescaling.
 ### Returns

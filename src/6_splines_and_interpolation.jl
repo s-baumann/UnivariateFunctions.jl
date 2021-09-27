@@ -5,7 +5,7 @@
                                  left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing)
     create_quadratic_spline(x::Union{Vector{D},Vector{<:DatePeriod}},y::Vector{<:Real}; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
                                  left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing) where D<:DatePeriod
-Makes a quadratic shape-preserving interpolation spline using the SchumakerSpline.jl package. This is returned as a Piecewise_Function rather than as a Schumaker struct.
+Makes a quadratic shape-preserving interpolation spline using the SchumakerSpline.jl package. This is returned as a `Piecewise_Function` rather than as a `Schumaker` struct.
 
 ### Inputs
 * `x` - A `Vector` with the x coordinates
@@ -19,10 +19,10 @@ Makes a quadratic shape-preserving interpolation spline using the SchumakerSplin
 
 
     create_quadratic_spline(schum::Schumaker)
-This converts a spline represented by a SchumakerSpline.Schumaker struct into the same
-spline but represented by a Piecewise_Function.
+This converts a spline represented by a `SchumakerSpline.Schumaker` struct into the same
+spline but represented by a `Piecewise_Function`.
 ### Inputs
-* `schum` - A Schumaker struct.
+* `schum` - A `Schumaker` struct.
 ### Returns
 * A `Piecewise_Function` containing the spline.
 """

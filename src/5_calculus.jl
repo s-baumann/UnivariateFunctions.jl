@@ -9,10 +9,10 @@ This calculates the integral of a function from a left limit and returns it as a
 So if you were to then evaluate this integral function at a point x then you would
 get the integral between left and x.
 
-If a Date, DateTime is input then it is first converted to a scalar with the years_from_global_base function.
+If a `Date`, `DateTime` is input then it is first converted to a scalar with the `years_from_global_base` function.
 
 ### Inputs
-* `f` - A UnivariateFunction.
+* `f` - A `UnivariateFunction`.
 * `left` - A left limit (scalar)
 ### Returns
 * A `UnivariateFunction`.
@@ -64,10 +64,10 @@ This calculates the integral of a function from a right limit and returns it as 
 So if you were to then evaluate this integral function at a point x then you would
 get the integral between right and x.
 
-If a Date, DateTime is input then it is first converted to a scalar with the years_from_global_base function.
+If a `Date`, `DateTime` is input then it is first converted to a scalar with the `years_from_global_base` function.
 
 ### Inputs
-* `f` - A UnivariateFunction.
+* `f` - A `UnivariateFunction`.
 * `right` - A right limit (scalar)
 ### Returns
 * A `UnivariateFunction`.
@@ -96,7 +96,7 @@ function left_integral(f::Piecewise_Function, right::R) where R<:Real
     end
     functions_[number_of_intervals] = evaluate(last_indefinite_integral, right) - last_indefinite_integral
     if number_of_intervals == 1
-        return(starts_, functions_)
+        return Piecewise_Function(starts_, functions_)
     end
     for i in reverse(1:(which_interval_contains_right-1))
         starts_[i]    = f.starts_[i]
@@ -116,10 +116,10 @@ end
 
 This calculates the integral of a function from a left limit to a right limit and returns a scalar.
 
-If a Date, DateTime is input then it is first converted to a scalar with the years_from_global_base function.
+If a `Date`, `DateTime` is input then it is first converted to a scalar with the `years_from_global_base` function.
 
 ### Inputs
-* `f` - A UnivariateFunction.
+* `f` - A `UnivariateFunction`.
 * `left` - A left limit (scalar)
 * `right` - A right limit (scalar)
 ### Returns

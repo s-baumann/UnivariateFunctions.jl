@@ -22,7 +22,7 @@ end
 """
     get_chevyshevs_up_to(N::Integer, first_kind::Bool = true)
 
-Get the first N chebyshev polynomials returned as a vector of UnivariateFunctions.
+Get the first N chebyshev polynomials returned as a vector of `UnivariateFunction`s.
 The first 20 polynomials of each are precompiled into the binaries for speed. If
 you need more than that they will be calculated at runtime.
 

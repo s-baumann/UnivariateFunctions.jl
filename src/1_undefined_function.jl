@@ -9,10 +9,10 @@ end
 
 """
     derivative(f::UnivariateFunction)
-This calculates the derivative of the function and returns it as a UnivariateFunction.
+This calculates the derivative of the function and returns it as a `UnivariateFunction`.
 
 ### Inputs
-* `f` - A UnivariateFunction.
+* `f` - A `UnivariateFunction`.
 ### Returns
 * A `UnivariateFunction`.
 """
@@ -22,10 +22,10 @@ end
 
 """
     indefinite_integral(f::UnivariateFunction)
-This calculates the indefinite integral of a UnivariateFunction.
+This calculates the indefinite integral of a `UnivariateFunction`.
 
 ### Inputs
-* `f` - A UnivariateFunction.
+* `f` - A `UnivariateFunction`.
 ### Returns
 * A `UnivariateFunction`.
 """

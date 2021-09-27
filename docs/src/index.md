@@ -13,7 +13,7 @@ It is possible to perform any additions, subtractions, multiplications between a
 
 ## Major limitations
 * It is not possible to divide by univariate functions or raise them by a negative power.
-* When multiplying `PE_Function`s with different base dates there is often an issue of very high or very low numbers that go outside machine precision. If one were trying to change a `PE_Function` from base 2010 to 50, this would not generally be possible. This is because to change $a exp(x-2020)$ to $q exp(x - 50)$ we need to premultiply the first expression by $exp(-1950)$ which is a tiny number. In these cases it is better to do the algebra on paper and rewriting the code accordingly as often base changes cancel out on paper. It is also good to change bases as rarely as possible. If different univariate functions use different bases then there is a need to base change when multiplying them which can result in errors. Note that if base changes are segment in the x domain by means of a piecewise function then they should never interact meaning it is ok to use different bases here.
+* When multiplying `PE_Function`s with different base dates there is often an issue of very high or very low numbers that go outside machine precision. If one were trying to change a `PE_Function` from base 2010 to 50, this would not generally be possible. This is because to change `a exp(x-2020)` to `q exp(x - 50)` we need to premultiply the first expression by `exp(-1950)` which is a tiny number. In these cases it is better to do the algebra on paper and rewriting the code accordingly as often base changes cancel out on paper. It is also good to change bases as rarely as possible. If different univariate functions use different bases then there is a need to base change when multiplying them which can result in errors. Note that if base changes are segment in the x domain by means of a piecewise function then they should never interact meaning it is ok to use different bases here.
 * There is no support for finding optima, roots, fixedpoints etc. If anyone has an idea of how to do it efficiently then please let me know.
 * There is no support for finding a function representing the upper/lower envelope of multiple functions. If anyone has an idea of how to do it efficiently then please let me know.
 
@@ -34,13 +34,13 @@ So for this package supports the creation of the following approximation schemes
 
 ## Date Handling
 
-* All base dates are immediately converted to floats and are not otherwise saved. Thus there is no difference between a `PE_Function` created with a base as a float and one created with the matching date. This is done to simplify the code. All date conversions is done by finding the year fractions between the date and the global base date of Date(2000,1,1). This particular global base date should not affect anything as long as it is consistent. It is relatively trivial to change it (in the `date_conversions.jl` file) and recompile however if desired.
+* All base dates are immediately converted to floats and are not otherwise saved. Thus there is no difference between a `PE_Function` created with a base as a float and one created with the matching date. This is done to simplify the code. All date conversions is done by finding the year fractions between the date and the global base date of `Date(2000,1,1)`. This particular global base date should not affect anything as long as it is consistent. It is relatively trivial to change it (in the `date_conversions.jl` file) and recompile however if desired.
 
 # Examples
 
 ## For basic algebra:
 
-Consider we have a two functions f and g and want to add them, multiply them by some other function h, then square it and finally integrate the result between 2.0 and 2.8. This can be done analytically with `UnivariateFunction`s:
+Consider we have a two functions `f` and `g` and want to add them, multiply them by some other function `h`, then square it and finally integrate the result between 2.0 and 2.8. This can be done analytically with `UnivariateFunction`s:
 ```
 f = PE_Function(1.0, 2.0, 4.0, 5)
 g = PE_Function(1.3, 2.0, 4.3, 2)
@@ -77,7 +77,7 @@ evaluate.(Ref(func), [Date(2020,1,1), Date(2021,1,2)])
 evaluate(derivative(func), Date(2021,1,2))
 evaluate_integral(func, Date(2020,1,1), Date(2021,1,2))
 ```
-If we had wanted to interpolate instead with a constant method(from left or from right) or by linearly interpolating then we could have just generated func with a different method:
+If we had wanted to interpolate instead with a constant method (from left or from right) or by linearly interpolating then we could have just generated func with a different method:
 * `create_constant_interpolation_to_left`,
 * `create_constant_interpolation_to_right`,
 * `create_linear_interpolation`.
