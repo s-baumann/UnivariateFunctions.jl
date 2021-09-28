@@ -45,6 +45,8 @@ If we had wanted to interpolate instead with a constant method (from left or fro
 * `create_constant_interpolation_to_right`,
 * `create_linear_interpolation`.
 
+## For approximation - fitting a UnivariateFunction to data
+
 If we have lots of data that we want to summarise with OLS
 ```
 # Generating example data
@@ -56,6 +58,9 @@ y = X .+ rand(Normal(),obs) .+ 7
 # And now making an approximation function
 approxFunction = create_ols_approximation(y, X, 0.0, 2, true)
 ```
+
+## For approximation - fitting a UnivariateFunction to a function with Chebyshev Polynomials
+
 And if we want to approximate the sin function in the [2.3, 5.6] bound with 7 polynomial terms and 20 approximation nodes:
 ```
 chebyshevs = create_chebyshev_approximation(sin, 20, 7, 2.3, 5.6)
