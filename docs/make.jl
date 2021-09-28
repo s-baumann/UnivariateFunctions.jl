@@ -5,7 +5,7 @@ makedocs(
     sitename = "UnivariateFunctions",
     modules = [UnivariateFunctions],
     pages = Any["Overview" => "index.md",
-                "Examples" => "Examples.jl",
+                "Examples" => "Examples.md",
                 "API" => "api.md"]
 )
 
