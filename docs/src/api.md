@@ -66,7 +66,6 @@ get_chevyshevs_up_to
 ### Date Conversions
 
 ```@docs
-years_between
-years_from_global_base
+seconds_between
 period_length
 ```

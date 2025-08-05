@@ -49,8 +49,8 @@ struct PE_Function{F<:Real,I<:Integer} <: UnivariateFunction
             return new{promo_type,I}(promo_type(a_),promo_type(b_),promo_type(base_),I(d_))
         end
     end
-    function PE_Function(a_::R,b_::S,base_::Union{Date,DateTime},d_::I) where R<:Real where S<:Real where I<:Real
-        new_base_ = years_from_global_base(base_)
+    function PE_Function(a_::R,b_::S,base_::Q,d_::I) where R<:Real where S<:Real where I<:Real where Q<:Union{Date,DateTime,ZonedDateTime}
+        new_base_ = years_from_global_base_date(base_)
         return PE_Function(a_, b_, new_base_, d_)
     end
     function PE_Function{Q,N}(a_::R,b_::S,base_::T,d_::I) where Q<:Real where N<:Integer where R<:Real where S<:Real where T<:Real where I<:Integer
@@ -66,11 +66,11 @@ This function contants a vector of UnivariateFunctions. When evaluted it
 adds the evaluations of these functions and returns the sum.
 """
 struct Sum_Of_Functions <: UnivariateFunction
-    functions_::Union{Array{PE_Function,1},Array{PE_Function{<:Real,<:Integer},1}}
+    functions_::Union{Vector{PE_Function},Vector{PE_Function{<:Real,<:Integer}}}
     function Sum_Of_Functions(funcs::Sum_Of_Functions)
         return funcs
     end
-    function Sum_Of_Functions(funcs::AbstractArray)
+    function Sum_Of_Functions(funcs::Vector)
         undefined_funcs  = funcs[isa.(funcs, Ref(Undefined_Function))]
         if length(undefined_funcs) > 0
             return Undefined_Function()
@@ -89,15 +89,11 @@ When evaludated it uses these vectors as a lookup. It chooses the correct Univar
 and evaluates it.
 """
 struct Piecewise_Function <: UnivariateFunction
-    starts_::Array{<:Real,1}
-    functions_::Array{UnivariateFunction,1}
-    function Piecewise_Function(starts::Array{<:Real,1}, functions::Array)
+    starts_::Vector{<:Real}
+    functions_::Vector{UnivariateFunction}
+    function Piecewise_Function(starts::Vector{<:Real}, functions::Vector)
         if !issorted(starts)
             error("Piecewise_Function must be constructed with a sorted increasing list of starts and the corresponding functions.")
-        end
-        if starts[1] != -Inf
-            starts    = vcat(-Inf, starts)
-            functions = vcat(Undefined_Function(), functions)
         end
         len = length(starts)
         if starts[len] == Inf
@@ -107,15 +103,15 @@ struct Piecewise_Function <: UnivariateFunction
         starts_without_pw_parts, functions_without_pw_parts = deal_with_piecewise_inputs(starts, functions)
         new(starts_without_pw_parts, functions_without_pw_parts)
     end
-    function Piecewise_Function(starts::Union{Array{DateTime,1},Array{Date,1},Array{Union{DateTime,Date},1}}, functions::Array)
-        starts_ = years_from_global_base.(starts)
+    function Piecewise_Function(starts::Vector{Q}, functions::Vector) where Q<:Union{Date,DateTime,ZonedDateTime}
+        starts_ = years_from_global_base_date.(starts)
         return Piecewise_Function(starts_, functions)
     end
-    function Piecewise_Function(start::Real, func)
-        return Piecewise_Function([start], [func])
+    function Piecewise_Function(start::R, func) where R<:Real
+        return Piecewise_Function(R[start], [func])
     end
-    function Piecewise_Function(start::Union{Date,DateTime}, func)
-        start_float = years_from_global_base(start)
+    function Piecewise_Function(start::Q, func) where Q<:Union{Date,DateTime,ZonedDateTime}
+        start_float = years_from_global_base_date(start)
         return Piecewise_Function(start_float, func)
     end
 end
@@ -134,42 +130,50 @@ with support between -10,10 then you can trim it to only have support between
 ### Returns
 * A `Piecewise_Function`.
 """
-function trim_piecewise_function(func::Piecewise_Function, left_limit::Real, right_limit::Real)
-    if func.starts_[1] != -Inf
-        starts_ = [-Inf, left_limit, right_limit]
-        funcs_  = [Undefined_Function(), func, Undefined_Function()]
-    else
-        starts_ = [left_limit, right_limit]
-        funcs_  = [func, Undefined_Function()]
-    end
+function trim_piecewise_function(func::Piecewise_Function, left_limit::R, right_limit::Real) where R<:AbstractFloat
+    starts_ = R[left_limit, right_limit]
+    funcs_  = UnivariateFunction[func, Undefined_Function()]
     return Piecewise_Function(starts_, funcs_)
 end
 
-function deal_with_piecewise_inputs(starts::Array{<:Real,1}, functions::Array)
+function deal_with_piecewise_inputs(starts::Vector{R}, functions::Vector) where R<:Real
     where_are_pw_bits = findall(typeof.(functions) .== UnivariateFunctions.Piecewise_Function)
     if length(where_are_pw_bits) < 1
         return starts, functions
     else
-        first_pw_slice_i = where_are_pw_bits[1]
-        pw = functions[first_pw_slice_i]
-        from = starts[first_pw_slice_i]
-        if length(starts) > first_pw_slice_i
-            to = starts[first_pw_slice_i+1]
-        else
-            to = Inf
+        stt = Vector{R}()
+        fns = Vector{UnivariateFunction}()
+        for i in 1:length(starts)
+            s = starts[i]
+            terminal = i < length(starts) ? starts[i+1] : Inf
+            f = functions[i]
+            if isa(f, UnivariateFunctions.Piecewise_Function)
+                # If we are before the start of the piecewise insert an Undefined_Function.
+                if s < f.starts_[1]
+                    stt = push!(stt, s)
+                    fns = push!(fns, Undefined_Function())
+                end
+                # Adding on the starts and functions of the Piecewise_Function.
+                for j in 1:length(f.starts_)
+                    putative_start = max(f.starts_[j], s)
+                    putative_endd = j < length(f.starts_) ? min(f.starts_[j+1], terminal) : terminal
+                    if putative_endd - putative_start > 10 * eps()
+                        stt = push!(stt, putative_start)
+                        fns = push!(fns, f.functions_[j])
+                    end
+                end
+            else
+                stt = push!(stt, s)
+                fns = push!(fns, f)
+            end
         end
-        pw_starts, pw_funcs = take_piecewise_slice(pw.starts_, pw.functions_,from, to)
-        pw_starts[1] = from
-        new_starts = vcat(first_entries(starts, first_pw_slice_i-1), pw_starts, last_entries(starts, length(starts) - first_pw_slice_i))
-        new_funcs = vcat(first_entries(functions, first_pw_slice_i-1), pw_funcs, last_entries(functions, length(starts) - first_pw_slice_i))
-        return deal_with_piecewise_inputs(new_starts, new_funcs)
+        return stt, fns
     end
-
 end
 
-function first_entries(vec::Array, how_many::Integer)
-    if how_many < 1
-        return Array{Any,1}()
+function first_entries(vec::Vector, how_many::Integer)
+    if how_many < 11
+        return Vector{Any}()
     elseif how_many > length(vec)
         return vec
     else
@@ -177,9 +181,9 @@ function first_entries(vec::Array, how_many::Integer)
     end
 end
 
-function last_entries(vec::Array, how_many::Integer)
+function last_entries(vec::Vector, how_many::Integer)
     if how_many < 1
-        return Array{Any,1}()
+        return Vector{Any}()
     elseif how_many > length(vec)
         return vec
     else
@@ -188,7 +192,7 @@ function last_entries(vec::Array, how_many::Integer)
     end
 end
 
-function take_piecewise_slice(starts::Array{<:Real,1}, functions::Array, from::Real, to::Real)
+function take_piecewise_slice(starts::Vector{<:Real}, functions::Vector, from::Real, to::Real)
     from_i = searchsortedlast(starts, from)
     to_i = searchsortedlast(starts, to)
     return starts[from_i:to_i], functions[from_i:to_i]
@@ -196,7 +200,7 @@ end
 
 function find(a::BitArray)
     len = length(a)
-    indices = Array{Int,1}()
+    indices = Vector{Int}()
     for i in 1:len
         if a[i]
             append!(indices, i)
@@ -205,7 +209,7 @@ function find(a::BitArray)
     return indices
 end
 
-function rationalise_array_of_functions(funcs::Array{PE_Function,1})
+function rationalise_array_of_functions(funcs::Vector{PE_Function})
     len = length(funcs)
     if len < 2
         return funcs
@@ -214,7 +218,7 @@ function rationalise_array_of_functions(funcs::Array{PE_Function,1})
     multipliers = map(f -> f.a_, funcs)
     unique_attributes = unique(attributes, dims = 1)
     new_len = size(unique_attributes)[1]
-    new_funcs = Array{PE_Function,1}(undef,new_len)
+    new_funcs = Vector{PE_Function}(undef,new_len)
     for i in 1:new_len
         atts =  transpose(unique_attributes[i,:])
         which_multipliers = all(attributes .== atts, dims=2)
@@ -224,7 +228,7 @@ function rationalise_array_of_functions(funcs::Array{PE_Function,1})
     return new_funcs
 end
 
-function clean_array_of_functions(funcs::Array)
+function clean_array_of_functions(funcs::Vector)
     undefined_funcs  = funcs[isa.(funcs, Ref(Undefined_Function))]
     piecewise_funcs  = funcs[isa.(funcs, Ref(Piecewise_Function))]
     if length(undefined_funcs) > 0
@@ -244,7 +248,7 @@ function clean_array_of_functions(funcs::Array)
     if length(pe_funcs) == 0
         return [PE_Function(0.0,0.0,0.0,0)]
     end
-    simplified_functions = rationalise_array_of_functions(convert(Array{PE_Function,1}, pe_funcs))
+    simplified_functions = rationalise_array_of_functions(convert(Vector{PE_Function}, pe_funcs))
     return simplified_functions
 end
 
@@ -269,15 +273,15 @@ end
 
 """
     evaluate(f::UnivariateFunction, r::Real)
-    evaluate(f::UnivariateFunction, d::Union{Date,DateTime})
+    evaluate(f::UnivariateFunction, d::Q) where Q<:Union{Date,DateTime,ZonedDateTime}
     evaluate(f::UnivariateFunction, x::DatePeriod)
 
 This evaluates the function at the requested point. If a `Date`, `DateTime` is input
-then it is first converted to a scalar with the `years_from_global_base` function.
+then it is first converted to a scalar with the `years_from_global_base_date` function.
 `DatePeriod`s are converted with the `period_length` function.
 """
-function evaluate(f::UnivariateFunction, d::Union{Date,DateTime})
-    date_in_relation_to_global_base = years_from_global_base(d)
+function evaluate(f::UnivariateFunction, d::Q) where Q<:Union{Date,DateTime,ZonedDateTime}
+    date_in_relation_to_global_base = years_from_global_base_date(d)
     return evaluate(f, date_in_relation_to_global_base)
 end
 function evaluate(f::UnivariateFunction, x::DatePeriod)
@@ -329,7 +333,7 @@ function change_base_of_PE_Function(f::PE_Function, new_base::Real)
         return PE_Function(new_a, f.b_, new_base, 0)
     else
         n = f.d_
-        funcs = Array{UnivariateFunction,1}(undef,n+1)
+        funcs = Vector{UnivariateFunction}(undef,n+1)
         for r in 0:n
             binom_coeff = factorial(n) / (factorial(r) * factorial(n-r))
             new_multiplier = binom_coeff * new_a * diff^r

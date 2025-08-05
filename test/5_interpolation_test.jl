@@ -1,8 +1,7 @@
 using Test
 
 @testset "Interpolation Tests" begin
-    using UnivariateFunctions: create_linear_interpolation, create_constant_interpolation_to_right, create_quadratic_spline
-    using UnivariateFunctions: create_constant_interpolation_to_left, years_from_global_base, evaluate
+    using UnivariateFunctions
     using Dates
 
     tol = 10*eps()
@@ -12,16 +11,16 @@ using Test
     x = StartDate .+ Dates.Day.(2 .* (1:1000 .- 1))
 
     function ff(x::Date)
-        days_between = years_from_global_base(x)
+        days_between = years_from_global_base_date(x)
         return log(days_between) + sqrt(days_between)
     end
     y = ff.(x)
 
     spline = create_linear_interpolation(x,y)
     # Test if interpolating
-    @test all(abs.(evaluate.(Ref(spline), x) .- y) .< tol)
+    @test all(abs.(spline.(x) .- y) .< tol)
 
-    x_float = years_from_global_base.(x)
+    x_float = zdt2unix.(x)
     coefficient_in_first_interval = (y[2] - y[1])/(x_float[2] - x_float[1])
     @test (coefficient_in_first_interval - spline.functions_[1].functions_[2].a_) < tol
     other_coefficient = (y[11] - y[10])/(x_float[11] - x_float[10])

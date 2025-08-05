@@ -24,7 +24,7 @@ for i in 1:1000
     x[i] = StartDate +Dates.Day(2* (i-1))
 end
 function ff(x::Date)
-    days_between = years_from_global_base(x)
+    days_between = zdt2unix(x)
     return log(days_between) + sqrt(days_between)
 end
 y = ff.(x)

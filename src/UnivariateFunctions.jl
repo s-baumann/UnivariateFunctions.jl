@@ -1,12 +1,16 @@
 module UnivariateFunctions
 
-using Dates
+using Dates, TimeZones
 using SchumakerSpline
 using GLM
+using DataFrames, MultivariateStats
+
+const tol = 10 * eps()
 
 # This includes timing functions for use of UnivariateFunctions with dates.
 include("date_conversions.jl")
-export years_between, years_from_global_base, period_length
+export seconds_between, days_between, years_between, period_length, years_from_global_base_date
+export zdt2unix, unix2zdt, unix2dt, unix2d
 # The abstrat type UnivariateFunction and all structs are implemented here.
 # In addition we have operator reversals and some supporting functions.
 include("0_structs_and_generic_reversals.jl")
@@ -21,7 +25,7 @@ include("4_piecewise_functions.jl")
 export evaluate, derivative, indefinite_integral
 
 include("5_calculus.jl")
-export  evaluate_integral, right_integral, left_integral
+export evaluate_integral, right_integral, left_integral
 
 include("chebyshevs.jl")
 export get_chevyshevs_up_to
@@ -32,6 +36,9 @@ export create_constant_interpolation_to_left, create_linear_interpolation
 
 include("7_regressions_and_approximation.jl")
 export create_ols_approximation, create_chebyshev_approximation
+
+include("8_isotonic_regressions.jl")
+export isotonic_regression
 
 # The following operators also have overloads
 export +, -, *, /, ^

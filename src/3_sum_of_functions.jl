@@ -7,7 +7,7 @@ function evaluate(sf::Sum_Of_Functions, point::Real)
     end
     return total
 end
-function (s::Sum_Of_Functions)(x::Union{Real,Date,DateTime,DatePeriod})
+function (s::Sum_Of_Functions)(x::Q) where Q<:Union{Real,Date,DateTime,ZonedDateTime,DatePeriod}
     return evaluate(s, x)
 end
 
@@ -42,7 +42,7 @@ function +(f1::Sum_Of_Functions, f2::Sum_Of_Functions)
     return Sum_Of_Functions([f1,f2])
 end
 function +(f1::Sum_Of_Functions, f2::Piecewise_Function)
-    added_functions = (f1 .+ f2.functions_)::Array
+    added_functions = (f1 .+ f2.functions_)::Vector
     return Piecewise_Function(f2.starts_,added_functions)
 end
 
@@ -62,7 +62,7 @@ function -(f1::Piecewise_Function, f2::Sum_Of_Functions)
 end
 
 function *(f1::Sum_Of_Functions,f2::Sum_Of_Functions)
-    results = Array{Sum_Of_Functions}(undef, length(f1.functions_))
+    results = Vector{Sum_Of_Functions}(undef, length(f1.functions_))
     for i in 1:length(f1.functions_)
         new_funcs = f1.functions_[i] * f2
         results[i] = new_funcs

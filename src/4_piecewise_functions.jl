@@ -2,9 +2,12 @@ import SchumakerSpline.evaluate
 
 function evaluate(f::Piecewise_Function, point::Real)
     which_function = searchsortedlast(f.starts_, point)
+    if which_function == 0
+        return evaluate(Undefined_Function(), point)
+    end
     return evaluate(f.functions_[which_function], point)
 end
-function (s::Piecewise_Function)(x::Union{Real,Date,DateTime,DatePeriod})
+function (s::Piecewise_Function)(x::Q) where Q<:Union{Real,Date,DateTime,ZonedDateTime,DatePeriod}
     return evaluate(s, x)
 end
 
@@ -37,23 +40,23 @@ end
 
 function create_common_pieces(f1::Piecewise_Function,f2::Piecewise_Function)
     starts_ = unique(sort!(vcat(f1.starts_,f2.starts_)))
-    functions1_ = Array{UnivariateFunction}(undef, length(starts_))
-    functions2_ = Array{UnivariateFunction}(undef, length(starts_))
+    functions1_ = Vector{UnivariateFunction}(undef, length(starts_))
+    functions2_ = Vector{UnivariateFunction}(undef, length(starts_))
     for i in 1:length(starts_)
         point = starts_[i]
         which_1 = searchsortedlast(f1.starts_, point)
-        functions1_[i] = f1.functions_[which_1]
+        functions1_[i] = (which_1 == 0) ? Undefined_Function() : f1.functions_[which_1]
         which_2 = searchsortedlast(f2.starts_, point)
-        functions2_[i] = f2.functions_[which_2]
+        functions2_[i] = (which_2 == 0) ? Undefined_Function() : f2.functions_[which_2]
     end
-    return Piecewise_Function(starts_, functions1_) , Piecewise_Function(starts_, functions2_)
+    return Piecewise_Function(starts_, functions1_), Piecewise_Function(starts_, functions2_)
 end
 
 function +(f1::Piecewise_Function,f2::Piecewise_Function)
     c_f1, c_f2 = create_common_pieces(f1,f2)
     starts_ = c_f1.starts_
     number_of_pieces = length(starts_)
-    functions_ = Array{UnivariateFunction}(undef, number_of_pieces)
+    functions_ = Vector{UnivariateFunction}(undef, number_of_pieces)
     for i in 1:number_of_pieces
         functions_[i] = c_f1.functions_[i] + c_f2.functions_[i]
     end
@@ -63,7 +66,7 @@ function *(f1::Piecewise_Function,f2::Piecewise_Function)
     c_f1, c_f2 = create_common_pieces(f1,f2)
     starts_ = c_f1.starts_
     number_of_pieces = length(starts_)
-    functions_ = Array{UnivariateFunction}(undef, number_of_pieces)
+    functions_ = Vector{UnivariateFunction}(undef, number_of_pieces)
     for i in 1:number_of_pieces
         functions_[i] = c_f1.functions_[i] * c_f2.functions_[i]
     end
@@ -73,7 +76,7 @@ function -(f1::Piecewise_Function,f2::Piecewise_Function)
     c_f1, c_f2 = create_common_pieces(f1,f2)
     starts_ = c_f1.starts_
     number_of_pieces = length(starts_)
-    functions_ = Array{UnivariateFunction}(undef, number_of_pieces)
+    functions_ = Vector{UnivariateFunction}(undef, number_of_pieces)
     for i in 1:number_of_pieces
         functions_[i] = c_f1.functions_[i] - c_f2.functions_[i]
     end

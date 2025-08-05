@@ -1,5 +1,6 @@
 using Test
 
+
 @testset "Piecewise Tests" begin
 
     using UnivariateFunctions
@@ -29,22 +30,20 @@ using Test
     f2 = Piecewise_Function([-0.1, 0.0,2.0, 40.0], [before, first_, second, last_])
 
     f3 =  Piecewise_Function([-0.1, 0.0,2.0, 40.0], [before, f1, second, last_])
-    f3.starts_ == [-Inf, -0.100, 0.00, 2.00, 40.0]
-    @test isa(f3.functions_[1],UnivariateFunctions.Undefined_Function)
+    @test f3.starts_ == [-0.100, 0.00, 2.00, 40.0]
+    @test isa(f3.functions_[1],UnivariateFunctions.PE_Function)
     @test isa(f3.functions_[2],UnivariateFunctions.PE_Function)
     @test isa(f3.functions_[3],UnivariateFunctions.PE_Function)
-    @test isa(f3.functions_[4],UnivariateFunctions.PE_Function)
-    @test isa(f3.functions_[5],UnivariateFunctions.Sum_Of_Functions)
+    @test isa(f3.functions_[4],UnivariateFunctions.Sum_Of_Functions)
 
     f4 =  Piecewise_Function([-2.1, -1.1,4.0, 40.0], [second, f1, second, last_])
-    f4.starts_ == [-Inf, -2.10, -1.10, -1.00, 3.00, 4.00, 40.0]
-    @test isa(f4.functions_[1], UnivariateFunctions.Undefined_Function)
+    @test f4.starts_ == [-2.10, -1.10, -1.00, 3.00, 4.00, 40.0]
+    @test isa(f4.functions_[1], UnivariateFunctions.PE_Function)
     @test isa(f4.functions_[2], UnivariateFunctions.PE_Function)
     @test isa(f4.functions_[3], UnivariateFunctions.PE_Function)
     @test isa(f4.functions_[4], UnivariateFunctions.PE_Function)
     @test isa(f4.functions_[5], UnivariateFunctions.PE_Function)
-    @test isa(f4.functions_[6], UnivariateFunctions.PE_Function)
-    @test isa(f4.functions_[7], UnivariateFunctions.Sum_Of_Functions)
+    @test isa(f4.functions_[6], UnivariateFunctions.Sum_Of_Functions)
 
     # Testing the other Piecewise_Function constructors
     f5 = Piecewise_Function(Date(2020,05,01), second)

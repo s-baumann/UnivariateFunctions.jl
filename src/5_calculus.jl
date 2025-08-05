@@ -3,13 +3,13 @@ import SchumakerSpline.evaluate_integral
 
 """
     right_integral(f::UnivariateFunction, left::Real)
-    right_integral(f::UnivariateFunction, left::Union{Date,DateTime})
+    right_integral(f::UnivariateFunction, left::Q) where Q<:Union{Date,DateTime,ZonedDateTime}
 
 This calculates the integral of a function from a left limit and returns it as a UnivariateFunction.
 So if you were to then evaluate this integral function at a point x then you would
 get the integral between left and x.
 
-If a `Date`, `DateTime` is input then it is first converted to a scalar with the `years_from_global_base` function.
+If a `Date`, `DateTime` is input then it is first converted to a scalar with the `years_from_global_base_date` function.
 
 ### Inputs
 * `f` - A `UnivariateFunction`.
@@ -18,24 +18,27 @@ If a `Date`, `DateTime` is input then it is first converted to a scalar with the
 * A `UnivariateFunction`.
 """
 function right_integral(f::UnivariateFunction, left::Real)
+    return right_integral(f, Float64(left))
+end
+function right_integral(f::UnivariateFunction, left::AbstractFloat)
     indef_int = indefinite_integral(f)
     left_constant = evaluate(indef_int, left)
     return indef_int - left_constant
 end
 
-function right_integral(f::UnivariateFunction, left::Union{Date,DateTime})
-    left_float = years_from_global_base(left)
+function right_integral(f::UnivariateFunction, left::Q) where Q<:Union{Date,DateTime,ZonedDateTime}
+    left_float = years_from_global_base_date(left)
     return right_integral(f, left_float)
 end
 
-function right_integral(f::Piecewise_Function, left::R) where R<:Real
+function right_integral(f::Piecewise_Function, left::R) where R<:AbstractFloat
     whole_number_of_intervals = length(f.starts_)
     which_interval_contains_left = searchsortedlast(f.starts_, left)
     number_of_intervals = whole_number_of_intervals - which_interval_contains_left + 1
-    starts_    =  Array{R,1}(undef, number_of_intervals)
+    starts_    =  Vector{R}(undef, number_of_intervals)
     starts_[1] = left
     first_indefinite_integral = indefinite_integral(f.functions_[which_interval_contains_left])
-    functions_    =  Array{UnivariateFunction}(undef, number_of_intervals)
+    functions_    =  Vector{UnivariateFunction}(undef, number_of_intervals)
     if typeof(first_indefinite_integral) == UnivariateFunctions.Undefined_Function
         return Undefined_Function()
     end
@@ -45,6 +48,7 @@ function right_integral(f::Piecewise_Function, left::R) where R<:Real
     end
     displacement  = which_interval_contains_left - 1
     for i in 2:number_of_intervals
+        println("")
         starts_[i]    = f.starts_[i + displacement]
         indef_int = indefinite_integral(f.functions_[i + displacement])
         if typeof(indef_int) == UnivariateFunctions.Undefined_Function
@@ -58,13 +62,13 @@ end
 
 """
     left_integral(f::UnivariateFunction, right::Real)
-    left_integral(f::UnivariateFunction, right::Union{Date,DateTime})
+    left_integral(f::UnivariateFunction, right::Q) where Q<:Union{Date,DateTime,ZonedDateTime}
 
 This calculates the integral of a function from a right limit and returns it as a UnivariateFunction.
 So if you were to then evaluate this integral function at a point x then you would
 get the integral between right and x.
 
-If a `Date`, `DateTime` is input then it is first converted to a scalar with the `years_from_global_base` function.
+If a `Date`, `DateTime` is input then it is first converted to a scalar with the `zdt2unix` function.
 
 ### Inputs
 * `f` - A `UnivariateFunction`.
@@ -73,24 +77,27 @@ If a `Date`, `DateTime` is input then it is first converted to a scalar with the
 * A `UnivariateFunction`.
 """
 function left_integral(f::UnivariateFunction, right::Real)
+    return left_integral(f, Float64(right))
+end
+function left_integral(f::UnivariateFunction, right::AbstractFloat)
     indef_int = indefinite_integral(f)
     right_constant = evaluate(indef_int, right)
     return right_constant - indef_int
 end
 
-function left_integral(f::UnivariateFunction, right::Union{Date,DateTime})
-    right_float = years_from_global_base(right)
+function left_integral(f::UnivariateFunction, right::Q) where Q<:Union{Date,DateTime,ZonedDateTime}
+    right_float = years_from_global_base_date(right)
     return left_integral(f, right_float)
 end
 
-function left_integral(f::Piecewise_Function, right::R) where R<:Real
+function left_integral(f::Piecewise_Function, right::R) where R<:AbstractFloat
     whole_number_of_intervals = length(f.starts_)
     which_interval_contains_right = searchsortedlast(f.starts_, right)
     number_of_intervals = which_interval_contains_right
-    starts_    =  Array{R,1}(undef, number_of_intervals)
+    starts_    =  Vector{R}(undef, number_of_intervals)
     starts_[number_of_intervals] = f.starts_[which_interval_contains_right]
     last_indefinite_integral = indefinite_integral(f.functions_[which_interval_contains_right])
-    functions_    =  Array{UnivariateFunction}(undef, number_of_intervals)
+    functions_    =  Vector{UnivariateFunction}(undef, number_of_intervals)
     if typeof(last_indefinite_integral) == UnivariateFunctions.Undefined_Function
         return Undefined_Function()
     end
@@ -111,12 +118,12 @@ function left_integral(f::Piecewise_Function, right::R) where R<:Real
 end
 
 """
-    evaluate_integral(f::UnivariateFunction,left::Real, right::Real)
-    evaluate_integral(f::UnivariateFunction,left::Union{Date,DateTime}, right::Union{Date,DateTime})
+    evaluate_integral(f::UnivariateFunction,left::AbstractFloat, right::AbstractFloat)
+    evaluate_integral(f::UnivariateFunction,left::Q, right::W) where Q<:Union{Date,DateTime,ZonedDateTime} where W<:Union{Date,DateTime,ZonedDateTime}
 
 This calculates the integral of a function from a left limit to a right limit and returns a scalar.
 
-If a `Date`, `DateTime` is input then it is first converted to a scalar with the `years_from_global_base` function.
+If a `Date`, `DateTime` is input then it is first converted to a scalar with the `zdt2unix` function.
 
 ### Inputs
 * `f` - A `UnivariateFunction`.
@@ -126,17 +133,20 @@ If a `Date`, `DateTime` is input then it is first converted to a scalar with the
 * A `Real`.
 """
 function evaluate_integral(f::UnivariateFunction,left::Real, right::Real)
+    return evaluate_integral(f, Float64(left), Float64(right))
+end
+function evaluate_integral(f::UnivariateFunction,left::AbstractFloat, right::AbstractFloat)
     indef_int  = indefinite_integral(f)
     left_eval  = evaluate(indef_int, left)
     right_eval = evaluate(indef_int, right)
     return (right_eval - left_eval)
 end
-function evaluate_integral(f::UnivariateFunction,left::Union{Date,DateTime}, right::Union{Date,DateTime})
-    left_as_float  = years_from_global_base(left)
-    right_as_float = years_from_global_base(right)
+function evaluate_integral(f::UnivariateFunction,left::Q, right::W) where Q<:Union{Date,DateTime,ZonedDateTime} where W<:Union{Date,DateTime,ZonedDateTime}
+    left_as_float  = years_from_global_base_date(left)
+    right_as_float = years_from_global_base_date(right)
     return evaluate_integral(f, left_as_float, right_as_float)
 end
 
-function evaluate_integral(f::Piecewise_Function,left::Real, right::Real)
+function evaluate_integral(f::Piecewise_Function,left::AbstractFloat, right::AbstractFloat)
     return evaluate(right_integral(f, left), right)
 end

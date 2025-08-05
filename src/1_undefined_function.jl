@@ -1,9 +1,9 @@
 import Base.+, Base.-, Base./, Base.*, Base.^
 import SchumakerSpline.evaluate
-function evaluate(f::Undefined_Function, point::Union{Real,Date,DateTime,DatePeriod})
+function evaluate(f::Undefined_Function, point::Q) where Q<:Union{Real,Date,DateTime,ZonedDateTime,DatePeriod}
     missing
 end
-function (s::Undefined_Function)(x::Union{Real,Date,DateTime,DatePeriod})
+function (s::Undefined_Function)(x::Q) where Q<:Union{Real,Date,DateTime,ZonedDateTime,DatePeriod}
     return missing
 end
 

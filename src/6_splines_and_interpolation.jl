@@ -1,7 +1,7 @@
 """
-    create_quadratic_spline(x::Union{Vector{DateTime},Vector{Date},Vector{Union{Date,DateTime}}},y::Vector{<:Real} ; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
-                                 left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing)
-    create_quadratic_spline(x::Vector{<:Real},y::Vector{<:Real} ; gradients::Union{Missing,Array{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
+    create_quadratic_spline(x::Vector{Q},y::Vector{<:Real} ; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
+                                 left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing) where Q<:Union{Date,DateTime,ZonedDateTime}
+    create_quadratic_spline(x::Vector{<:Real},y::Vector{<:Real} ; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
                                  left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing)
     create_quadratic_spline(x::Union{Vector{D},Vector{<:DatePeriod}},y::Vector{<:Real}; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve),
                                  left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing) where D<:DatePeriod
@@ -26,8 +26,8 @@ spline but represented by a `Piecewise_Function`.
 ### Returns
 * A `Piecewise_Function` containing the spline.
 """
-function create_quadratic_spline(x::Union{Vector{DateTime},Vector{Date},Vector{Union{Date,DateTime}}},y::Vector{<:Real} ; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve), left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing)
-    x_as_Floats = years_from_global_base.(x)
+function create_quadratic_spline(x::Vector{Q},y::Vector{<:Real} ; gradients::Union{Missing,Vector{<:Real}} = missing, extrapolation::Tuple{Schumaker_ExtrapolationSchemes,Schumaker_ExtrapolationSchemes} = (Curve,Curve), left_gradient::Union{Missing,Real} = missing, right_gradient::Union{Missing,Real} = missing) where Q<:Union{Date,DateTime,ZonedDateTime}
+    x_as_Floats = years_from_global_base_date.(x)
     return create_quadratic_spline(x_as_Floats, y; gradients = gradients, extrapolation = extrapolation, left_gradient = left_gradient, right_gradient = right_gradient)
 end
 
@@ -40,7 +40,7 @@ function create_quadratic_spline(schum::Schumaker)
     starts_ = schum.IntStarts_
     coefficients = schum.coefficient_matrix_
     number_of_intervals = size(coefficients)[1]
-    funcs_ = Array{Sum_Of_Functions,1}(undef, number_of_intervals)
+    funcs_ = Vector{Sum_Of_Functions}(undef, number_of_intervals)
     for i in 1:number_of_intervals
         quadratic = PE_Function(coefficients[i,1], 0.0, starts_[i], 2)
         linear    = PE_Function(coefficients[i,2], 0.0, starts_[i], 1)
@@ -71,7 +71,7 @@ Makes a piecewise constant interpolation function. values from the left are copi
 * A `Piecewise_Function` containing the interpolation function.
 """
 function create_constant_interpolation_to_right(x::Vector{Date},y::Vector{<:Real})
-    x_Float = years_from_global_base.(x)
+    x_Float = years_from_global_base_date.(x)
     return create_constant_interpolation_to_right(x_Float,y)
 end
 
@@ -100,7 +100,7 @@ Makes a piecewise constant interpolation function. values from the right are cop
 * A `Piecewise_Function` containing the interpolation function.
 """
 function create_constant_interpolation_to_left(x::Vector{Date},y::Vector{<:Real})
-    x_Float = years_from_global_base.(x)
+    x_Float = years_from_global_base_date.(x)
     return create_constant_interpolation_to_left(x_Float,y)
 end
 
@@ -127,8 +127,8 @@ Makes a piecewise linear interpolation function. This is continuous.
 ### Returns
 * A `Piecewise_Function` containing the interpolation function.
 """
-function create_linear_interpolation(x::Vector{Date},y::Vector{<:Real})
-    x_Float = years_from_global_base.(x)
+function create_linear_interpolation(x::Vector{Q},y::Vector{<:Real}) where Q<:Union{Date,DateTime,ZonedDateTime}
+    x_Float = years_from_global_base_date.(x)
     return create_linear_interpolation(x_Float,y)
 end
 
@@ -142,8 +142,8 @@ function create_linear_interpolation(x::Vector{R},y::Vector{<:Real}) where R<:Re
     if len < 2
         error("Insufficient data to linearly interpolate")
     end
-    starts_ = Array{R,1}(undef, len-1)
-    funcs_  = Array{UnivariateFunction}(undef, len-1)
+    starts_ = Vector{R}(undef, len-1)
+    funcs_  = Vector{UnivariateFunction}(undef, len-1)
     coefficient = (y[2] - y[1])/(x[2] - x[1])
     starts_[1] = -Inf
     funcs_[1]  = Sum_Of_Functions([PE_Function(y[1],0.0,0.0,0), PE_Function(coefficient,0.0,x[1],1)])

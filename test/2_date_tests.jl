@@ -1,20 +1,20 @@
 using Test
 @testset "Date Tests" begin
-    using UnivariateFunctions: evaluate, years_between, years_from_global_base, PE_Function, Sum_Of_Functions, change_base_of_PE_Function, derivative, indefinite_integral, right_integral, left_integral, evaluate_integral
+    using UnivariateFunctions
     using Dates
     tol = 10*eps()
 
     today = Date(2000,1,1)
     pe_func = PE_Function(1.0,2.0,today, 3)
-    @test (pe_func.base_ - years_from_global_base(today))   < tol
-    date_in_2020 = Date(2020,1,1)
-    pe_func2 = PE_Function(1.0,2.0,date_in_2020, 3)
-    @test (pe_func2.base_ - years_from_global_base(date_in_2020))   < tol
-    @test abs(evaluate(pe_func, date_in_2020) - evaluate(pe_func, years_from_global_base(date_in_2020)) ) < tol
+    @test abs(pe_func.base_ - years_from_global_base_date(today))   < tol
+    date_in_2020 = Date(2000,2,3)
+    pe_func2 = PE_Function(1.0,0.00000000002,date_in_2020, 2)
+    @test abs(pe_func2.base_ - years_from_global_base_date(date_in_2020))   < tol
+    @test abs(evaluate(pe_func, date_in_2020) - evaluate(pe_func, years_from_global_base_date(date_in_2020)) ) < tol
 
     #Sum of functions
-    sum_func = Sum_Of_Functions([pe_func, PE_Function(2.0,2.5,today, 3) ])
-    @test abs(evaluate(sum_func, date_in_2020) - evaluate(sum_func, years_from_global_base(date_in_2020)) ) < tol
+    sum_func = Sum_Of_Functions([pe_func, PE_Function(2.0,0.00000000000025,today, 1) ])
+    @test abs(evaluate(sum_func, date_in_2020) - evaluate(sum_func, years_from_global_base_date(date_in_2020)) ) < tol
 
     # left and right integrals
     l_int = left_integral(pe_func, today)
@@ -24,7 +24,7 @@ using Test
 
     # With DateTimes
     today_time = DateTime(2000,1,1, 10, 10, 1)
-    pe_func = PE_Function(1.0,2.0,today_time, 3)
+    pe_func = PE_Function(1.0,0.00000000000020,today_time, 1)
 
 
     # left and right integrals

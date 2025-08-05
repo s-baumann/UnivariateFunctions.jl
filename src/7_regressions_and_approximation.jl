@@ -1,7 +1,7 @@
 
 """
     create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::Real = 0.0, degree::Integer = 1, intercept::Bool = true)
-    create_ols_approximation(y::Vector{<:Real}, x::Union{Vector{DateTime},Vector{Date},Vector{Union{Date,DateTime}}}, base_x::Union{Date,DateTime} = global_base_date, degree::Integer = 1, intercept::Bool = true)
+    create_ols_approximation(y::Vector{<:Real}, x::Vector{Q}, base_x::Union{Date,DateTime} = global_base_date, degree::Integer = 1, intercept::Bool = true) where Q<:Union{Date,DateTime,ZonedDateTime}
 
 An approximation function calculated via OLS.
 
@@ -34,7 +34,7 @@ function create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::
 
     lm1 = fit(LinearModel,  hcat(X), y)
     beta = lm1.pp.beta0
-    func_array = Array{PE_Function,1}(undef,convert(Int, intercept) + degree)
+    func_array = Vector{PE_Function}(undef,convert(Int, intercept) + degree)
     if intercept
         func_array[1] = PE_Function(beta[1], 0.0, base_x, 0)
     end
@@ -44,9 +44,9 @@ function create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::
     return Sum_Of_Functions(func_array)
 end
 
-function create_ols_approximation(y::Vector{<:Real}, x::Union{Vector{DateTime},Vector{Date},Vector{Union{Date,DateTime}}}, base_x::Union{Date,DateTime} = global_base_date, degree::Integer = 1, intercept::Bool = true)
-    base = years_from_global_base.(base_x)
-    xx   = years_from_global_base.(x)
+function create_ols_approximation(y::Vector{<:Real}, x::Vector{Q}, base_x::WW = minimum(x), degree::Integer = 1, intercept::Bool = true) where Q<:Union{Date,DateTime,ZonedDateTime} where WW<:Union{Date,DateTime,ZonedDateTime}
+    base = years_from_global_base_date.(base_x)
+    xx   = years_from_global_base_date.(x)
     return create_ols_approximation(y, xx, base, degree, intercept)
 end
 
