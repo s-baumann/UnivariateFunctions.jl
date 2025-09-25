@@ -3,7 +3,7 @@ module UnivariateFunctions
 using Dates, TimeZones
 using SchumakerSpline
 using GLM
-using DataFrames, MultivariateStats
+using DataFrames, MultivariateStats, VegaLite
 
 const tol = 10 * eps()
 
@@ -39,6 +39,9 @@ export create_ols_approximation, create_chebyshev_approximation
 
 include("8_isotonic_regressions.jl")
 export isotonic_regression
+
+include("z_plotting.jl")
+export plot
 
 # The following operators also have overloads
 export +, -, *, /, ^

@@ -1,4 +1,7 @@
-function isotonic_regression(dd::DataFrame, xvar::Symbol, yvar::Symbol)
+function isotonic_regression(dd::DataFrame, xvar::Symbol, yvar::Symbol; increasing::Bool = true)
+    if increasing == false
+        dd[!, yvar] = -1.0 .* dd[!, yvar]
+    end
     sort!(dd, [xvar])
     dd[!, :yhat] = isotonic(dd[!, xvar], dd[!, yvar])
 
@@ -54,5 +57,8 @@ function isotonic_regression(dd::DataFrame, xvar::Symbol, yvar::Symbol)
     push!(starts_, dd[nrow(dd), xvar])
     push!(funcs_, PE_Function(dd[nrow(dd), :yhat]))
     aa = Piecewise_Function(starts_, funcs_)
+    if increasing == false
+        aa = -1.0 .* aa
+    end
     return aa
 end
