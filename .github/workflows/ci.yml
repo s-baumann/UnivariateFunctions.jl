@@ -9,7 +9,6 @@ on:
       - master
       - main
     tags: '*'
-
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -18,13 +17,12 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1' # automatically expands to latest stable 1.x
+          - '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
         os:
           - ubuntu-latest
           - windows-latest
         arch:
           - x64
-
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
@@ -42,29 +40,12 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
-
-      # 🔧 NEW STEP 1 — clean old/partial depot artifacts (prevents OpenSSL_jll errors)
-      - name: Clean Julia depot
-        run: |
-          rm -rf ~/.julia/compiled ~/.julia/artifacts
-
-      # 🔧 NEW STEP 2 — force explicit environment setup (downloads missing stdlibs)
-      - name: Instantiate and precompile
-        run: |
-          julia --color=yes --project -e '
-            using Pkg;
-            Pkg.Registry.update();
-            Pkg.instantiate();
-            Pkg.precompile();
-          '
-
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v5
         with:
           file: lcov.info
-
   docs:
     name: Documentation
     runs-on: ubuntu-latest
@@ -82,7 +63,7 @@ jobs:
           julia --project=docs -e '
             using Documenter: doctest
             using UnivariateFunctions
-            doctest(UnivariateFunctions)'
+            doctest(UnivariateFunctions)' # change MYPACKAGE to the name of your package
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
