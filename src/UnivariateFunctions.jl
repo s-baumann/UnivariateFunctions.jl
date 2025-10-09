@@ -3,7 +3,7 @@ module UnivariateFunctions
 using Dates, TimeZones
 using SchumakerSpline
 using GLM
-using DataFrames, MultivariateStats, VegaLite
+using DataFrames, MultivariateStats, NonNegLeastSquares, VegaLite, UUIDs
 
 const tol = 10 * eps()
 
@@ -11,7 +11,7 @@ const tol = 10 * eps()
 include("date_conversions.jl")
 export seconds_between, days_between, years_between, period_length, years_from_global_base_date
 export zdt2unix, unix2zdt, unix2dt, unix2d
-# The abstrat type UnivariateFunction and all structs are implemented here.
+# The abstract type UnivariateFunction and all structs are implemented here.
 # In addition we have operator reversals and some supporting functions.
 include("0_structs_and_generic_reversals.jl")
 export UnivariateFunction, Undefined_Function, PE_Function, Sum_Of_Functions, Piecewise_Function
@@ -38,10 +38,13 @@ include("7_regressions_and_approximation.jl")
 export create_ols_approximation, create_chebyshev_approximation
 
 include("8_isotonic_regressions.jl")
-export isotonic_regression
+export isotonic_regression, monotonic_regression
 
 include("z_plotting.jl")
 export plot
+
+include("z_serialisation.jl")
+export DataFrame, UnivariateFunction, PE_Function, Sum_Of_Functions, Piecewise_Function
 
 # The following operators also have overloads
 export +, -, *, /, ^
