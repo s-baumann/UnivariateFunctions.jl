@@ -15,4 +15,4 @@ function plot(fun::Union{UnivariateFunction,Undefined_Function, PE_Function, Sum
 end
 function plot(fun::Union{UnivariateFunction,Undefined_Function, PE_Function, Sum_Of_Functions, Piecewise_Function}, dd; width = 1000, height = 1000, x_name = :x, y_name = :y)
     return plot(fun, minimum(dd[!, x_name]), maximum(dd[!, x_name]), dd; width=width, height=height, x_name=x_name, y_name=y_name)
-end
+end 
