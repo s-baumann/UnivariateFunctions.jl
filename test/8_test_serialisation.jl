@@ -1,12 +1,8 @@
 using Test
 
 @testset "Serialisation Tests" begin
-
-    using LinearAlgebra, StatsBase
-    using NonNegLeastSquares  # for nonneg_lsq
-    using Plots
     using UnivariateFunctions
-    using DataFrames, UUIDs
+    using DataFrames
 
     x = sort(rand(50)*10)
     function ff(x::Real)

@@ -1,9 +1,6 @@
 module UnivariateFunctions
 
-using Dates, TimeZones
-using SchumakerSpline
-using GLM
-using DataFrames, MultivariateStats, NonNegLeastSquares, VegaLite, UUIDs
+using Dates, TimeZones, SchumakerSpline, GLM, DataFrames, MultivariateStats, NonNegLeastSquares, VegaLite, UUIDs
 
 const tol = 10 * eps()
 

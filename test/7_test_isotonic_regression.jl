@@ -2,10 +2,7 @@ using Test
 
 @testset "Isotonic Regression Tests" begin
     using UnivariateFunctions
-    using Dates
-    using Random, Distributions
-    using DataFrames
-    using VegaLite
+    using Dates, Random, DataFrames
 
     tol = 10*eps()
 
