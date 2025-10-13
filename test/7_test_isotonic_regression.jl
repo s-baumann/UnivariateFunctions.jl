@@ -55,4 +55,7 @@ using Test
     plot(mono_decreasing, dd)
     @test mono_decreasing isa Piecewise_Function
     @test mono_decreasing(1.9) <= mono_decreasing(0.1)
+
+    plot([iso_increasing, mono_increasing], 0.0, 2.0)
+
 end
