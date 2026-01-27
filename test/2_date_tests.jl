@@ -1,7 +1,9 @@
 using Test
+using UnivariateFunctions
+using Dates
+using TimeZones
+
 @testset "Date Tests" begin
-    using UnivariateFunctions
-    using Dates, TimeZones
     tol = 10*eps()
 
     # ========== Test unix2zdt ==========
