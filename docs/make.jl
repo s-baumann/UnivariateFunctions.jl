@@ -6,6 +6,7 @@ makedocs(
     modules = [UnivariateFunctions],
     pages = Any["Overview" => "index.md",
                 "Examples" => "Examples.md",
+                "Regression and Smoothing" => "Regression.md",
                 "API" => "api.md"]
 )
 

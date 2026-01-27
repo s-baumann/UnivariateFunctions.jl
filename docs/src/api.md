@@ -54,6 +54,34 @@ create_ols_approximation
 create_chebyshev_approximation
 ```
 
+### Smoothing
+
+```@docs
+supersmoother
+```
+
+### Monotonic Regression
+
+```@docs
+isotonic_regression
+monotonic_regression
+```
+
+### Unimodal Regression
+
+```@docs
+unimodal_regression
+```
+
+### Cross-Validation Model Selection
+
+```@docs
+cv_monotonic_regression
+cv_unimodal_regression
+cv_shape_regression
+CVRegressionResult
+```
+
 ### Internal Functions
 
 ```@docs

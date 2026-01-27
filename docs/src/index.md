@@ -20,9 +20,23 @@ It also supports the following spline (which can also be used for interpolation)
 * `Schumaker` shape preserving spline - Such a `Piecewise_Function` spline can be constructed by the `create_quadratic_spline` method.
 
 ## Approximation and regression
-So for this package supports the creation of the following approximation schemes:
+This package supports the creation of the following approximation and regression schemes:
 * OLS regression. The `create_ols_approximation` function can create a `UnivariateFunction` approximating a linear relationship. The degree input to this function can be used to specify the number of higher powers of x to be used in approximating y. For instance if the degree is two then y will be approximated as a linear combination of $x$ and $x^2$ as well as an intercept (if the intercept boolean is true).
 * Chebyshev polynomials - This will approximate a function using the Chebyshev basis functions. This approximation function can then be integrated to accomplish Chebyshev–Gauss quadrature.
+
+## Regression and Smoothing
+The package provides several shape-constrained regression methods that return `Piecewise_Function` objects:
+* `supersmoother` - Friedman's SuperSmoother (1984), an adaptive local linear regression that automatically selects bandwidth at each point.
+* `isotonic_regression` - Fits a monotonic step function using the Pool Adjacent Violators algorithm.
+* `monotonic_regression` - Fits a piecewise linear monotonic function using nonnegative least squares.
+* `unimodal_regression` - Fits functions with a single peak (quasiconcave/concave) or trough (quasiconvex/convex).
+
+Cross-validation functions are also provided for automatic shape selection:
+* `cv_monotonic_regression` - Automatically selects between increasing and decreasing.
+* `cv_unimodal_regression` - Automatically selects among the four unimodal shapes.
+* `cv_shape_regression` - Selects from all six shapes (monotonic + unimodal) or a custom subset.
+
+See the [Regression and Smoothing](@ref) page for detailed documentation and examples.
 
 ## Date Handling
 

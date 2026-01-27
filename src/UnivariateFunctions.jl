@@ -1,6 +1,6 @@
 module UnivariateFunctions
 
-using Dates, TimeZones, SchumakerSpline, GLM, DataFrames, MultivariateStats, NonNegLeastSquares, VegaLite, UUIDs
+using Dates, TimeZones, SchumakerSpline, GLM, DataFrames, MultivariateStats, NonNegLeastSquares, VegaLite, UUIDs, Random, Statistics
 
 const tol = 10 * eps()
 
@@ -36,6 +36,12 @@ export create_ols_approximation, create_chebyshev_approximation
 
 include("8_isotonic_regressions.jl")
 export isotonic_regression, monotonic_regression
+
+include("9_supersmoother.jl")
+export supersmoother
+
+include("10_unimodals.jl")
+export unimodal_regression, cv_monotonic_regression, cv_unimodal_regression, cv_shape_regression, CVRegressionResult
 
 include("z_plotting.jl")
 export plot

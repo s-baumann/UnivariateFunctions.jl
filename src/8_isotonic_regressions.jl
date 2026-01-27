@@ -1,4 +1,23 @@
+"""
+    isotonic_regression(x, y; increasing=true)
 
+Fit an isotonic (monotonic step function) regression using the Pool Adjacent Violators (PAV) algorithm.
+
+# Arguments
+- `x`: Independent variable values
+- `y`: Dependent variable values
+- `increasing`: If `true`, fit monotonically increasing function; if `false`, decreasing. Default `true`
+
+Returns a `Piecewise_Function` representing the isotonic fit.
+
+# Example
+```julia
+x = collect(1.0:10.0)
+y = x .+ randn(10)
+fit = isotonic_regression(x, y; increasing=true)
+fit(5.5)  # evaluate at new point
+```
+"""
 function isotonic_regression(x::Vector{R}, y::Vector{R}; increasing::Bool = true) where R<:Real
     if increasing == false
         y = -1.0 .* y
@@ -86,6 +105,32 @@ function make_obs_grid(x::Vector{R}; nbins::Int=10) where R<:Real
 end
 
 
+"""
+    monotonic_regression(x, y; nbins=10, equally_spaced_bins=true, increasing=true)
+
+Fit a piecewise linear monotonic regression using nonnegative least squares.
+
+This method divides the x-domain into bins and fits a piecewise linear function
+with nonnegative slopes (for increasing) or nonpositive slopes (for decreasing).
+
+# Arguments
+- `x`: Independent variable values
+- `y`: Dependent variable values
+- `nbins`: Number of bins for the piecewise linear fit. Default `10`
+- `equally_spaced_bins`: If `true`, bins are equally spaced in x; if `false`, based on observation quantiles. Default `true`
+- `increasing`: If `true`, fit monotonically increasing function; if `false`, decreasing. Default `true`
+
+Returns a `Piecewise_Function` representing the monotonic fit.
+
+# Example
+```julia
+x = collect(range(0, 5, length=100))
+y = sqrt.(x) .+ 0.1 .* randn(100)
+fit = monotonic_regression(x, y; nbins=15, increasing=true)
+fit(2.5)  # evaluate at new point
+derivative(fit)  # get derivative function
+```
+"""
 function monotonic_regression(x::Vector{R}, y::Vector{R}; nbins::Integer = 10, equally_spaced_bins::Bool=true, increasing::Bool = true) where R<:Real
     idx = sortperm(x)
     x = x[idx]
@@ -148,3 +193,6 @@ end
 function monotonic_regression(dd::DataFrame, xvar::Symbol, yvar::Symbol; nbins::Integer = 10, equally_spaced_bins::Bool=true, increasing::Bool = true)
     return monotonic_regression(dd[!, xvar], dd[!, yvar]; nbins=nbins, equally_spaced_bins=equally_spaced_bins, increasing=increasing)
 end
+
+
+
