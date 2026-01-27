@@ -89,11 +89,24 @@ change_base_of_PE_Function
 trim_piecewise_function
 convert_to_linearly_rescale_inputs
 get_chevyshevs_up_to
+_kfold_indices
+_cv_error
+_local_linear_smooth
+_local_linear_loo_residuals
+_smooth_values
+_supersmoother_values
 ```
 
 ### Date Conversions
 
 ```@docs
 seconds_between
+days_between
+years_between
 period_length
+years_from_global_base_date
+zdt2unix
+unix2zdt
+unix2dt
+unix2d
 ```

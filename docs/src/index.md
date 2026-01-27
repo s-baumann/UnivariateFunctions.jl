@@ -36,7 +36,7 @@ Cross-validation functions are also provided for automatic shape selection:
 * `cv_unimodal_regression` - Automatically selects among the four unimodal shapes.
 * `cv_shape_regression` - Selects from all six shapes (monotonic + unimodal) or a custom subset.
 
-See the [Regression and Smoothing](@ref) page for detailed documentation and examples.
+See the [Regression and Smoothing](Regression.md) page for detailed documentation and examples.
 
 ## Date Handling
 
