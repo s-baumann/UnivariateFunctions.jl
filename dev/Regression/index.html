@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Regression and Smoothing · UnivariateFunctions</title><meta name="title" content="Regression and Smoothing · UnivariateFunctions"/><meta property="og:title" content="Regression and Smoothing · UnivariateFunctions"/><meta property="twitter:title" content="Regression and Smoothing · UnivariateFunctions"/><meta name="description" content="Documentation for UnivariateFunctions."/><meta property="og:description" content="Documentation for UnivariateFunctions."/><meta property="twitter:description" content="Documentation for UnivariateFunctions."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">UnivariateFunctions</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Overview</a></li><li><a class="tocitem" href="../Examples/">Examples</a></li><li class="is-active"><a class="tocitem" href>Regression and Smoothing</a><ul class="internal"><li><a class="tocitem" href="#Overview-of-Methods"><span>Overview of Methods</span></a></li><li><a class="tocitem" href="#SuperSmoother"><span>SuperSmoother</span></a></li><li><a class="tocitem" href="#Isotonic-Regression"><span>Isotonic Regression</span></a></li><li><a class="tocitem" href="#Monotonic-Regression"><span>Monotonic Regression</span></a></li><li><a class="tocitem" href="#Unimodal-Regression"><span>Unimodal Regression</span></a></li><li><a class="tocitem" href="#Cross-Validation-Model-Selection"><span>Cross-Validation Model Selection</span></a></li><li><a class="tocitem" href="#DataFrame-Interface"><span>DataFrame Interface</span></a></li><li><a class="tocitem" href="#Working-with-Fitted-Functions"><span>Working with Fitted Functions</span></a></li><li><a class="tocitem" href="#Complete-Example"><span>Complete Example</span></a></li></ul></li><li><a class="tocitem" href="../api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Regression and Smoothing</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Regression and Smoothing</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/s-baumann/UnivariateFunctions.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/s-baumann/UnivariateFunctions.jl/blob/master/docs/src/Regression.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Regression-and-Smoothing"><a class="docs-heading-anchor" href="#Regression-and-Smoothing">Regression and Smoothing</a><a id="Regression-and-Smoothing-1"></a><a class="docs-heading-anchor-permalink" href="#Regression-and-Smoothing" title="Permalink"></a></h1><p>This package provides several regression and smoothing methods that fit <code>Piecewise_Function</code> objects to data. Because the fitted functions are <code>UnivariateFunction</code>s, you can differentiate, integrate, and combine them analytically.</p><h2 id="Overview-of-Methods"><a class="docs-heading-anchor" href="#Overview-of-Methods">Overview of Methods</a><a id="Overview-of-Methods-1"></a><a class="docs-heading-anchor-permalink" href="#Overview-of-Methods" title="Permalink"></a></h2><table><tr><th style="text-align: right">Function</th><th style="text-align: right">Description</th><th style="text-align: right">Shape Constraint</th></tr><tr><td style="text-align: right"><code>supersmoother</code></td><td style="text-align: right">Adaptive local linear regression</td><td style="text-align: right">None (flexible)</td></tr><tr><td style="text-align: right"><code>isotonic_regression</code></td><td style="text-align: right">Pool Adjacent Violators algorithm</td><td style="text-align: right">Monotonic</td></tr><tr><td style="text-align: right"><code>monotonic_regression</code></td><td style="text-align: right">Binned monotonic regression</td><td style="text-align: right">Monotonic (piecewise linear)</td></tr><tr><td style="text-align: right"><code>unimodal_regression</code></td><td style="text-align: right">Single peak/trough regression</td><td style="text-align: right">Unimodal or curvature-constrained</td></tr><tr><td style="text-align: right"><code>cv_monotonic_regression</code></td><td style="text-align: right">Auto-select increasing/decreasing</td><td style="text-align: right">Monotonic with CV</td></tr><tr><td style="text-align: right"><code>cv_unimodal_regression</code></td><td style="text-align: right">Auto-select unimodal shape</td><td style="text-align: right">Unimodal with CV</td></tr><tr><td style="text-align: right"><code>cv_shape_regression</code></td><td style="text-align: right">Auto-select from all shapes</td><td style="text-align: right">Any shape with CV</td></tr></table><h2 id="SuperSmoother"><a class="docs-heading-anchor" href="#SuperSmoother">SuperSmoother</a><a id="SuperSmoother-1"></a><a class="docs-heading-anchor-permalink" href="#SuperSmoother" title="Permalink"></a></h2><p>Friedman&#39;s SuperSmoother (1984) is a local linear regression with adaptive bandwidth selection. It automatically chooses the amount of smoothing at each point based on the local structure of the data.</p><pre><code class="language-julia hljs">using UnivariateFunctions
+using Random, Distributions
+
+# Generate noisy sinusoidal data
+Random.seed!(42)
+x = collect(range(0, 4π, length=200))
+y = sin.(x) .+ rand(Normal(0, 0.3), 200)
+
+# Fit supersmoother
+fit = supersmoother(x, y)
+
+# Evaluate at new points
+fit(2.5)
+fit.(collect(0:0.1:4π))
+
+# Get derivative and integral
+deriv = derivative(fit)
+integ = indefinite_integral(fit)</code></pre><h3 id="Parameters"><a class="docs-heading-anchor" href="#Parameters">Parameters</a><a id="Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Parameters" title="Permalink"></a></h3><ul><li><code>spans</code>: Vector of candidate spans (fraction of data). Default <code>[0.05, 0.2, 0.5]</code></li><li><code>bass</code>: Bass enhancement (0-10). Higher values favor smoother fits. Default <code>0.0</code></li></ul><pre><code class="language-julia hljs"># More smoothing with bass enhancement
+fit_smooth = supersmoother(x, y; bass=8.0)
+
+# Less smoothing with smaller spans
+fit_rough = supersmoother(x, y; spans=[0.02, 0.05, 0.1])</code></pre><h2 id="Isotonic-Regression"><a class="docs-heading-anchor" href="#Isotonic-Regression">Isotonic Regression</a><a id="Isotonic-Regression-1"></a><a class="docs-heading-anchor-permalink" href="#Isotonic-Regression" title="Permalink"></a></h2><p>Isotonic regression fits a monotonically increasing (or decreasing) step function using the Pool Adjacent Violators (PAV) algorithm. This is useful when you know the relationship should be monotonic but don&#39;t want to assume a parametric form.</p><pre><code class="language-julia hljs"># Generate increasing data with noise
+x = collect(range(0, 5, length=100))
+y = 2.0 .* x .+ rand(Normal(0, 1.0), 100)
+
+# Fit isotonic increasing
+fit_inc = isotonic_regression(x, y; increasing=true)
+
+# Fit isotonic decreasing
+fit_dec = isotonic_regression(x, y; increasing=false)</code></pre><h2 id="Monotonic-Regression"><a class="docs-heading-anchor" href="#Monotonic-Regression">Monotonic Regression</a><a id="Monotonic-Regression-1"></a><a class="docs-heading-anchor-permalink" href="#Monotonic-Regression" title="Permalink"></a></h2><p><code>monotonic_regression</code> fits a piecewise linear function with monotonicity constraints using nonnegative least squares. This gives smoother results than <code>isotonic_regression</code> while still enforcing monotonicity.</p><pre><code class="language-julia hljs"># Fit with 15 bins, equally spaced
+fit = monotonic_regression(x, y; nbins=15, increasing=true)
+
+# Use observation-based bins (quantile spacing)
+fit_quantile = monotonic_regression(x, y; nbins=15, equally_spaced_bins=false)</code></pre><h3 id="Parameters-2"><a class="docs-heading-anchor" href="#Parameters-2">Parameters</a><a class="docs-heading-anchor-permalink" href="#Parameters-2" title="Permalink"></a></h3><ul><li><code>nbins</code>: Number of bins for piecewise linear fit. Default <code>10</code></li><li><code>equally_spaced_bins</code>: If <code>true</code>, bins are equally spaced in x; if <code>false</code>, based on observation quantiles. Default <code>true</code></li><li><code>increasing</code>: If <code>true</code>, fit increasing function; if <code>false</code>, decreasing. Default <code>true</code></li></ul><h2 id="Unimodal-Regression"><a class="docs-heading-anchor" href="#Unimodal-Regression">Unimodal Regression</a><a id="Unimodal-Regression-1"></a><a class="docs-heading-anchor-permalink" href="#Unimodal-Regression" title="Permalink"></a></h2><p><code>unimodal_regression</code> fits functions with a single peak (concave/quasiconcave) or single trough (convex/quasiconvex). This is useful for data with a clear maximum or minimum.</p><h3 id="Shape-Options"><a class="docs-heading-anchor" href="#Shape-Options">Shape Options</a><a id="Shape-Options-1"></a><a class="docs-heading-anchor-permalink" href="#Shape-Options" title="Permalink"></a></h3><p>The function supports four shape constraints controlled by <code>convex</code> and <code>quasi</code> parameters:</p><table><tr><th style="text-align: right"><code>convex</code></th><th style="text-align: right"><code>quasi</code></th><th style="text-align: right">Shape</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>false</code></td><td style="text-align: right"><code>true</code></td><td style="text-align: right">Quasiconcave</td><td style="text-align: right">Single peak: slopes go + then -</td></tr><tr><td style="text-align: right"><code>true</code></td><td style="text-align: right"><code>true</code></td><td style="text-align: right">Quasiconvex</td><td style="text-align: right">Single trough: slopes go - then +</td></tr><tr><td style="text-align: right"><code>false</code></td><td style="text-align: right"><code>false</code></td><td style="text-align: right">Concave</td><td style="text-align: right">Slopes monotonically decrease</td></tr><tr><td style="text-align: right"><code>true</code></td><td style="text-align: right"><code>false</code></td><td style="text-align: right">Convex</td><td style="text-align: right">Slopes monotonically increase</td></tr></table><pre><code class="language-julia hljs"># Data with a single peak
+x = collect(range(-3, 3, length=200))
+y = -2 .* (x .- 0.5).^2 .+ 5 .+ rand(Normal(0, 0.4), 200)
+
+# Fit quasiconcave (single peak, no curvature constraint)
+fit_qc = unimodal_regression(x, y; convex=false, quasi=true)
+
+# Fit true concave (slopes must decrease)
+fit_c = unimodal_regression(x, y; convex=false, quasi=false)
+
+# Data with a single trough
+y_trough = 2 .* (x .- 0.5).^2 .+ 1 .+ rand(Normal(0, 0.4), 200)
+
+# Fit quasiconvex (single trough)
+fit_qv = unimodal_regression(x, y_trough; convex=true, quasi=true)
+
+# Fit true convex (slopes must increase)
+fit_v = unimodal_regression(x, y_trough; convex=true, quasi=false)</code></pre><h3 id="Parameters-3"><a class="docs-heading-anchor" href="#Parameters-3">Parameters</a><a class="docs-heading-anchor-permalink" href="#Parameters-3" title="Permalink"></a></h3><ul><li><code>nbins</code>: Number of bins for piecewise linear fit. Default <code>10</code></li><li><code>equally_spaced_bins</code>: If <code>true</code>, bins are equally spaced; if <code>false</code>, quantile-based. Default <code>true</code></li><li><code>convex</code>: If <code>false</code>, fit peak (concave); if <code>true</code>, fit trough (convex). Default <code>false</code></li><li><code>quasi</code>: If <code>true</code>, only enforce unimodality; if <code>false</code>, also enforce curvature. Default <code>true</code></li></ul><h2 id="Cross-Validation-Model-Selection"><a class="docs-heading-anchor" href="#Cross-Validation-Model-Selection">Cross-Validation Model Selection</a><a id="Cross-Validation-Model-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Cross-Validation-Model-Selection" title="Permalink"></a></h2><p>When you&#39;re unsure about the shape of the relationship, use cross-validation to automatically select the best shape.</p><h3 id="cv*monotonic*regression"><a class="docs-heading-anchor" href="#cv*monotonic*regression">cv<em>monotonic</em>regression</a><a id="cv*monotonic*regression-1"></a><a class="docs-heading-anchor-permalink" href="#cv*monotonic*regression" title="Permalink"></a></h3><p>Automatically selects between increasing and decreasing monotonic functions:</p><pre><code class="language-julia hljs"># Let CV decide if relationship is increasing or decreasing
+result = cv_monotonic_regression(x, y; nbins=15, nfolds=10, seed=42)
+
+# Access the fitted function
+result.fitted(2.5)
+
+# See which shape was selected
+result.selected_shape  # :increasing or :decreasing
+
+# Compare CV errors
+result.cv_errors  # Dict(:increasing =&gt; ..., :decreasing =&gt; ...)</code></pre><h3 id="cv*unimodal*regression"><a class="docs-heading-anchor" href="#cv*unimodal*regression">cv<em>unimodal</em>regression</a><a id="cv*unimodal*regression-1"></a><a class="docs-heading-anchor-permalink" href="#cv*unimodal*regression" title="Permalink"></a></h3><p>Automatically selects among the four unimodal shapes:</p><pre><code class="language-julia hljs">result = cv_unimodal_regression(x, y; nbins=12, nfolds=10, seed=42)
+
+result.selected_shape  # :quasiconcave, :quasiconvex, :concave, or :convex
+result.cv_errors       # Dict with all four CV errors</code></pre><h3 id="cv*shape*regression"><a class="docs-heading-anchor" href="#cv*shape*regression">cv<em>shape</em>regression</a><a id="cv*shape*regression-1"></a><a class="docs-heading-anchor-permalink" href="#cv*shape*regression" title="Permalink"></a></h3><p>The most flexible option - selects from all six shapes (2 monotonic + 4 unimodal):</p><pre><code class="language-julia hljs"># Choose from all shapes
+result = cv_shape_regression(x, y; shapes=:all, nbins=12, nfolds=10, seed=42)
+
+# Or restrict to specific categories
+result_mono = cv_shape_regression(x, y; shapes=:monotonic)  # increasing/decreasing only
+result_uni = cv_shape_regression(x, y; shapes=:unimodal)    # unimodal shapes only
+
+# Or specify exactly which shapes to consider
+result_custom = cv_shape_regression(x, y; shapes=[:increasing, :quasiconcave, :convex])</code></pre><h3 id="CVRegressionResult"><a class="docs-heading-anchor" href="#CVRegressionResult">CVRegressionResult</a><a id="CVRegressionResult-1"></a><a class="docs-heading-anchor-permalink" href="#CVRegressionResult" title="Permalink"></a></h3><p>All CV functions return a <code>CVRegressionResult</code> struct:</p><pre><code class="language-julia hljs">struct CVRegressionResult
+    fitted::Piecewise_Function  # The fitted function
+    selected_shape::Symbol       # Which shape was selected
+    cv_errors::Dict{Symbol, Float64}  # CV error for each candidate
+    nfolds::Int                  # Number of folds used
+end</code></pre><p>The result is callable - you can use it directly as a function:</p><pre><code class="language-julia hljs">result = cv_shape_regression(x, y)
+result(2.5)  # Evaluates the fitted function at 2.5</code></pre><h2 id="DataFrame-Interface"><a class="docs-heading-anchor" href="#DataFrame-Interface">DataFrame Interface</a><a id="DataFrame-Interface-1"></a><a class="docs-heading-anchor-permalink" href="#DataFrame-Interface" title="Permalink"></a></h2><p>All regression functions support a DataFrame interface:</p><pre><code class="language-julia hljs">using DataFrames
+
+df = DataFrame(x = x, y = y)
+
+# All functions accept DataFrame + column symbols
+fit = supersmoother(df, :x, :y)
+fit = monotonic_regression(df, :x, :y; increasing=true)
+fit = unimodal_regression(df, :x, :y; convex=false)
+fit = cv_shape_regression(df, :x, :y; shapes=:all)</code></pre><h2 id="Working-with-Fitted-Functions"><a class="docs-heading-anchor" href="#Working-with-Fitted-Functions">Working with Fitted Functions</a><a id="Working-with-Fitted-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Working-with-Fitted-Functions" title="Permalink"></a></h2><p>Since all fitted functions are <code>Piecewise_Function</code>s (which are <code>UnivariateFunction</code>s), you get full access to analytical operations:</p><pre><code class="language-julia hljs">fit = supersmoother(x, y)
+
+# Derivative - returns another Piecewise_Function
+deriv = derivative(fit)
+deriv(2.5)  # Evaluate derivative at a point
+
+# Indefinite integral
+integ = indefinite_integral(fit)
+
+# Definite integral
+area = evaluate_integral(fit, 0.0, 5.0)
+
+# Combine with other functions
+g = PE_Function(2.0, 0.0, 0.0, 1)  # g(x) = 2x
+combined = fit + g
+combined = fit * g
+combined = fit^2
+
+# Plot (requires VegaLite)
+plot(fit, 0.0, 5.0)</code></pre><h2 id="Complete-Example"><a class="docs-heading-anchor" href="#Complete-Example">Complete Example</a><a id="Complete-Example-1"></a><a class="docs-heading-anchor-permalink" href="#Complete-Example" title="Permalink"></a></h2><pre><code class="language-julia hljs">using UnivariateFunctions
+using DataFrames, Random, Distributions
+
+Random.seed!(123)
+
+# Generate data with unknown shape
+n = 200
+x = collect(range(0, 6, length=n))
+y = 3 .* sin.(x) .+ 0.3 .* x .+ rand(Normal(0, 0.5), n)
+
+df = DataFrame(x = x, y = y)
+
+# Use CV to find the best shape
+result = cv_shape_regression(x, y; shapes=:all, nbins=15, nfolds=10, seed=42)
+
+println(&quot;Selected shape: &quot;, result.selected_shape)
+println(&quot;CV errors:&quot;)
+for (shape, err) in sort(collect(result.cv_errors), by=x-&gt;x[2])
+    println(&quot;  $shape: $(round(err, digits=2))&quot;)
+end
+
+# Use the fitted function
+fit = result.fitted
+
+# Compute derivative to find rate of change
+deriv = derivative(fit)
+
+# Find total area under curve
+area = evaluate_integral(fit, 0.0, 6.0)
+println(&quot;Area under curve: &quot;, round(area, digits=4))
+
+# Plot fit over data
+plt = plot(fit, df; x_name=:x, y_name=:y)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Examples/">« Examples</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Tuesday 27 January 2026 10:13">Tuesday 27 January 2026</span>. Using Julia version 1.11.8.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
