@@ -198,6 +198,78 @@ result = cv_shape_regression(x, y)
 result(2.5)  # Evaluates the fitted function at 2.5
 ```
 
+## Iterative Fitting with UnivariateFitter
+
+`UnivariateFitter` provides a mutable wrapper for iteratively fitting shape-constrained functions. This is useful when data arrives in batches and you want to update the fit incrementally, optionally blending new fits with previous ones.
+
+### Supported Methods
+
+| Symbol | Description |
+|--------|-------------|
+| `:increasing` | Monotonic increasing (via `monotonic_regression`) |
+| `:decreasing` | Monotonic decreasing (via `monotonic_regression`) |
+| `:convex` | Single trough, slopes increase (via `unimodal_regression`) |
+| `:concave` | Single peak, slopes decrease (via `unimodal_regression`) |
+| `:quasiconvex` | Single trough, unimodal only (via `unimodal_regression`) |
+| `:quasiconcave` | Single peak, unimodal only (via `unimodal_regression`) |
+| `:supersmoother` | Adaptive local regression (via `supersmoother`) |
+
+### Basic Usage
+
+```julia
+using UnivariateFunctions
+
+# Create a fitter with default settings
+fitter = UnivariateFitter(:increasing)
+
+# Fit to data
+x = collect(range(0, 10, length=200))
+y = 2.0 .* x .+ randn(200) .* 0.5
+fit!(fitter, x, y)
+
+# Evaluate the fitted function
+fitter(5.0)
+```
+
+### Blending and Simplification
+
+When fitting iteratively, you can blend new fits with the previous fit using `weight_on_new`, and periodically simplify the accumulated `Piecewise_Function` to control complexity:
+
+```julia
+# Blend new fits: 70% new, 30% previous
+fitter = UnivariateFitter(:increasing; weight_on_new=0.7, nbins=15,
+                           simplification_frequency=5, left=0.0, right=10.0)
+
+# Each call to fit! blends with the previous result
+for batch in data_batches
+    fit!(fitter, batch.x, batch.y)
+end
+```
+
+### Parameters
+
+- `method`: Shape constraint (see table above)
+- `nbins`: Number of bins for regression and simplification. Default `10`
+- `equally_spaced_bins`: Bin spacing strategy. Default `true`
+- `weight_on_new`: Blending weight in `[0,1]`. `1.0` uses only new fit. Default `1.0`
+- `simplification_frequency`: Simplify every N fits. `0` disables. Default `0`
+- `left`, `right`: Domain bounds for simplification. Default `-Inf`, `Inf`
+
+## Simplifying Piecewise Functions
+
+The `simplify` function reduces the complexity of a `Piecewise_Function` by evaluating it at evenly spaced points and re-interpolating:
+
+```julia
+pw = create_linear_interpolation(x, y)  # many pieces
+
+# Simplify to 20 pieces over [0, 10] using linear interpolation
+pw_simple = simplify(pw, 20, 0.0, 10.0, :linear)
+
+# Other interpolation methods
+pw_quad = simplify(pw, 20, 0.0, 10.0, :quadratic)
+pw_const = simplify(pw, 20, 0.0, 10.0, :constant_right)
+```
+
 ## DataFrame Interface
 
 All regression functions support a DataFrame interface:

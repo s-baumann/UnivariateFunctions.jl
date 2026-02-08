@@ -30,6 +30,7 @@ export get_chevyshevs_up_to
 include("6_splines_and_interpolation.jl")
 export create_quadratic_spline, create_constant_interpolation_to_right
 export create_constant_interpolation_to_left, create_linear_interpolation
+export UnivariateFitter, fit!, simplify
 
 include("7_regressions_and_approximation.jl")
 export create_ols_approximation, create_chebyshev_approximation

@@ -51,7 +51,8 @@ The package uses a 4-level type hierarchy for `UnivariateFunction` (abstract bas
 | `8_isotonic_regressions.jl` | Isotonic/monotonic regression (Pool Adjacent Violators) |
 | `9_supersmoother.jl` | Friedman's SuperSmoother algorithm |
 | `10_unimodals.jl` | Unimodal regression and cross-validation |
-| `date_conversions.jl` | Date/DateTime to float conversion (base: 2000-01-01) |
+| `chebyshevs.jl` | Precomputed Chebyshev polynomials (first 20, both kinds) |
+| `date_conversions.jl` | Date/DateTime to float conversion (base: 1970-01-01 UTC) |
 | `z_plotting.jl` | VegaLite visualization |
 | `z_serialisation.jl` | DataFrame conversion |
 
@@ -59,8 +60,16 @@ The package uses a 4-level type hierarchy for `UnivariateFunction` (abstract bas
 
 1. **No division or negative powers** - Banned to maintain analytical differentiability/integrability
 2. **Base date overflow** - When multiplying PE_Functions with very different bases (e.g., 2010 vs 50), numerical overflow can occur. Workaround: change bases on paper before implementation
-3. **Dates as year fractions** - All dates convert to year fractions from global base 2000-01-01; no date info stored in PE_Function
+3. **Dates as year fractions** - All dates convert to year fractions from global base 1970-01-01 UTC (`global_base_date`); no date info stored in PE_Function
 4. **No optimization** - No built-in root/optima finding functions
+
+### Key Design Patterns
+
+- **Seniority-based dispatch**: Binary operations between different types delegate to the more senior type (Undefined > PE > Sum > Piecewise). Commutative ops define one direction and reverse the other.
+- **Flattening constructors**: `Sum_Of_Functions` and `Piecewise_Function` constructors normalize inputs — sums flatten nested sums and rationalize duplicate terms (merging PE_Functions with identical `b`, `base`, `d` by summing their `a` coefficients). Piecewise flattens nested piecewise inputs.
+- **Tolerance constant**: `const tol = 10 * eps()` is used globally for near-zero comparisons, normalizing PE_Functions with negligible coefficients or exponential rates.
+- **Callable structs**: All types implement `(f::Type)(x) = evaluate(f, x)` as functors. All return `Ref(e)` from `Base.broadcastable`.
+- **Integration by parts**: `indefinite_integral` for PE_Functions with both `b != 0` and `d > 0` recurses, reducing `d` by 1 each step until `d == 0`.
 
 ### Main Operations
 
@@ -81,6 +90,16 @@ Algebraic operations: `+`, `-`, `*` (scalar and function), `^` (non-negative int
 - `cv_shape_regression(x, y)` - Cross-validated shape selection
 
 All accept both arrays and DataFrames with column symbols.
+
+### UnivariateFitter
+
+`UnivariateFitter` is a mutable struct for iterative shape-constrained fitting. It wraps the regression functions above and supports:
+- **Methods**: `:increasing`, `:decreasing`, `:convex`, `:concave`, `:quasiconvex`, `:quasiconcave`, `:supersmoother`
+- **Iterative blending**: `fit!(fitter, x, y)` fits new data and blends with the previous fit via `weight_on_new`
+- **Periodic simplification**: When `simplification_frequency > 0`, the accumulated `Piecewise_Function` is resampled and re-interpolated via `simplify()` to control complexity
+- **Callable**: `fitter(x)` evaluates the current fitted function
+
+The `simplify(f, n_points, left, right, method)` function approximates a `Piecewise_Function` by evaluating at evenly spaced points and re-interpolating with `:linear`, `:quadratic`, `:constant_left`, or `:constant_right`.
 
 ## Test Structure
 

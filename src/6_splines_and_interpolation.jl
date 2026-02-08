@@ -156,3 +156,133 @@ function create_linear_interpolation(x::Vector{R},y::Vector{<:Real}) where R<:Re
     end
     return Piecewise_Function(starts_, funcs_)
 end
+
+"""
+    simplify(f::Piecewise_Function, n_points::Integer, left::Real, right::Real, method::Symbol = :linear)
+    simplify(f::Piecewise_Function, n_points::Integer, left::Q, right::Q, method::Symbol = :linear) where Q<:Union{Date,DateTime,ZonedDateTime}
+
+Approximates a `Piecewise_Function` with a simpler one by evaluating at `n_points` evenly
+spaced points over `[left, right]` and re-interpolating.
+
+### Inputs
+* `f` - A `Piecewise_Function` to simplify.
+* `n_points` - The number of evenly spaced sample points.
+* `left` - The left boundary of the domain.
+* `right` - The right boundary of the domain.
+* `method` - The interpolation method. One of `:constant_right`, `:constant_left`, `:linear`, `:quadratic`.
+
+### Returns
+* A `Piecewise_Function`.
+"""
+function simplify(f::Piecewise_Function, n_points::Integer, left::Real, right::Real, method::Symbol = :linear)
+    if n_points < 2
+        error("n_points must be at least 2")
+    end
+    x = collect(range(left, right, length = n_points))
+    y = evaluate.(f, x)
+    if method == :constant_right
+        return create_constant_interpolation_to_right(x, y)
+    elseif method == :constant_left
+        return create_constant_interpolation_to_left(x, y)
+    elseif method == :linear
+        return create_linear_interpolation(x, y)
+    elseif method == :quadratic
+        return create_quadratic_spline(x, y)
+    else
+        error("Unknown method :$method. Use :constant_right, :constant_left, :linear, or :quadratic.")
+    end
+end
+
+function simplify(f::Piecewise_Function, n_points::Integer, left::Q, right::Q, method::Symbol = :linear) where Q<:Union{Date,DateTime,ZonedDateTime}
+    return simplify(f, n_points, years_from_global_base_date(left), years_from_global_base_date(right), method)
+end
+
+
+"""
+    UnivariateFitter
+
+A mutable struct for iteratively fitting univariate functions with shape constraints.
+Each call to `fit!` fits new data and optionally blends with the previous fit via
+`weight_on_new`. Periodic simplification reduces the complexity of the accumulated
+`Piecewise_Function`.
+
+### Fields
+* `fun` - The current fitted `UnivariateFunction`.
+* `method` - Fitting method. One of `:increasing`, `:decreasing`, `:convex`, `:concave`, `:quasiconvex`, `:quasiconcave`, `:supersmoother`.
+* `times_through` - Number of times `fit!` has been called.
+* `simplification_frequency` - Simplify the function every this many calls to `fit!`. `0` disables simplification.
+* `nbins` - Number of bins for the regression and for simplification.
+* `equally_spaced_bins` - If `true`, bins are equally spaced in x; if `false`, based on observation quantiles.
+* `weight_on_new` - Blending weight in `[0,1]`. `1.0` means only the new fit is used; lower values blend with the previous fit.
+* `left_` - Left boundary for simplification domain.
+* `right_` - Right boundary for simplification domain.
+
+### Constructor
+    UnivariateFitter(method::Symbol; nbins=10, equally_spaced_bins=true,
+                     weight_on_new=1.0, simplification_frequency=0,
+                     left=-Inf, right=Inf)
+
+Creates a `UnivariateFitter` initialised with a zero function.
+"""
+mutable struct UnivariateFitter
+    fun::UnivariateFunctions.UnivariateFunction
+    method::Symbol
+    times_through::Int
+    simplification_frequency::Int
+    nbins::Int
+    equally_spaced_bins::Bool
+    weight_on_new::Float64
+    left_::Float64
+    right_::Float64
+end
+
+function UnivariateFitter(method::Symbol; nbins::Int=10, equally_spaced_bins::Bool=true,
+                          weight_on_new::Float64=1.0, simplification_frequency::Int=0,
+                          left::Real=-Inf, right::Real=Inf)
+    return UnivariateFitter(PE_Function(0.0, 0.0, 0.0, 0), method, 0, simplification_frequency,
+                            nbins, equally_spaced_bins, weight_on_new, Float64(left), Float64(right))
+end
+
+function evaluate(fitter::UnivariateFitter, x)
+    return fitter.fun(x)
+end
+function (fitter::UnivariateFitter)(x)
+    return evaluate(fitter, x)
+end
+
+"""
+    fit!(fitter::UnivariateFitter, x_new, y_new)
+
+Fit the `UnivariateFitter` to new data `x_new`, `y_new`. The fitted function is blended
+with the previous fit according to `fitter.weight_on_new`. If `simplification_frequency > 0`
+and the current iteration is a multiple, the function is simplified via resampling.
+"""
+function fit!(fitter::UnivariateFitter, x_new, y_new)
+    newfun = begin
+        if fitter.method == :increasing
+            UnivariateFunctions.monotonic_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, increasing=true)
+        elseif fitter.method == :decreasing
+            UnivariateFunctions.monotonic_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, increasing=false)
+        elseif fitter.method == :convex
+            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=true, quasi=false)
+        elseif fitter.method == :concave
+            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=false, quasi=false)
+        elseif fitter.method == :quasiconvex
+            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=true, quasi=true)
+        elseif fitter.method == :quasiconcave
+            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=false, quasi=true)
+        elseif fitter.method == :supersmoother
+            UnivariateFunctions.supersmoother(x_new, y_new)
+        else
+            error("Unknown maximal correlation method: $(fitter.method)")
+        end
+    end
+    if fitter.times_through > 0
+        newfun = (fitter.weight_on_new * newfun) + ((1.0 - fitter.weight_on_new) * fitter.fun)
+    end
+    if fitter.simplification_frequency > 0 && (fitter.times_through % fitter.simplification_frequency == 0)
+        newfun = UnivariateFunctions.simplify(newfun, fitter.nbins, fitter.left_, fitter.right_)
+    end
+    fitter.fun = newfun
+    fitter.times_through += 1
+end

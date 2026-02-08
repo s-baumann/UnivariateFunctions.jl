@@ -38,13 +38,21 @@ right_integral
 left_integral
 ```
 
-### Interpolation
+### Interpolation and Simplification
 
 ```@docs
 create_quadratic_spline
 create_constant_interpolation_to_right
 create_constant_interpolation_to_left
 create_linear_interpolation
+simplify
+```
+
+### Iterative Fitting
+
+```@docs
+UnivariateFitter
+fit!
 ```
 
 ### Approximation

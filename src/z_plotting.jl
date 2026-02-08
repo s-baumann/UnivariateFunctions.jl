@@ -1,4 +1,4 @@
-function expand_grid(vector_of_vectors, nombres::Vector{Symbol}) where T
+function expand_grid(vector_of_vectors, nombres::Vector{Symbol})
       if length(vector_of_vectors) != length(nombres) stop("The two input vectors have different lengths.") end
       v = vec(collect(Base.product(  vector_of_vectors...  )))
       df = DataFrame()
