@@ -17,15 +17,14 @@ evaluate_integral(result_of_operations, 2.0, 2.8)
 Suppose we have want to approximate some function with some sampled points. First to generate some points
 ```
 using UnivariateFunctions
-const global_base_date = Date(2000,1,1)
 StartDate = Date(2018, 7, 21)
 x = Array{Date}(undef, 1000)
 for i in 1:1000
     x[i] = StartDate +Dates.Day(2* (i-1))
 end
 function ff(x::Date)
-    days_between = zdt2unix(x)
-    return log(days_between) + sqrt(days_between)
+    x_float = years_from_global_base_date(x)
+    return log(x_float) + sqrt(x_float)
 end
 y = ff.(x)
 ```

@@ -2,7 +2,7 @@
 CurrentModule = UnivariateFunctions
 ```
 
-# Internal Functions
+# API Reference
 
 ```@index
 Pages = ["api.md"]
@@ -22,7 +22,7 @@ Piecewise_Function
 
 Note that in addition to the below functions the following operators:
 
-`+`, `-`, `\`, `*`, `^`
+`+`, `-`, `/`, `*`, `^`
 
 have also been overloaded so that a function will be returned with the analytical
 sum, difference, product, quotient, power. The restrictions are that you cannot
@@ -96,7 +96,7 @@ CVRegressionResult
 change_base_of_PE_Function
 trim_piecewise_function
 convert_to_linearly_rescale_inputs
-get_chevyshevs_up_to
+get_chebyshevs_up_to
 _kfold_indices
 _cv_error
 _local_linear_smooth

@@ -5,11 +5,9 @@ Generate random fold assignments for k-fold CV.
 Returns a vector of length n with values 1:nfolds.
 """
 function _kfold_indices(n::Int, nfolds::Int; seed::Union{Int,Nothing}=nothing)
-    if !isnothing(seed)
-        Random.seed!(seed)
-    end
+    rng = isnothing(seed) ? Random.default_rng() : Random.MersenneTwister(seed)
     folds = repeat(1:nfolds, ceil(Int, n / nfolds))[1:n]
-    return shuffle(folds)
+    return shuffle(rng, folds)
 end
 
 """

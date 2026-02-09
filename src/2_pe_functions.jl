@@ -2,6 +2,9 @@ import Base.+, Base.-, Base./, Base.*
 import SchumakerSpline.evaluate
 function evaluate(f::PE_Function, x::Real)
     diff = x - f.base_
+    if abs(f.b_) < tol
+        return f.a_ * (diff)^f.d_
+    end
     return f.a_ * exp(f.b_ * diff) * (diff)^f.d_
 end
 function (s::PE_Function)(x::Q) where Q<:Union{Real,Date,DateTime,ZonedDateTime, DatePeriod}
@@ -11,13 +14,15 @@ end
 function derivative(f::PE_Function)
     if f.d_ == 0
         return PE_Function(f.a_ * f.b_, f.b_, f.base_, f.d_)
+    elseif abs(f.b_) < tol
+        return PE_Function(f.a_ * f.d_, 0.0, f.base_, f.d_ - 1)
     else
         return PE_Function(f.a_ * f.d_, f.b_, f.base_, f.d_ - 1) +  PE_Function(f.a_ * f.b_, f.b_, f.base_, f.d_)
     end
 end
 
 function indefinite_integral(f::PE_Function)
-    if (abs(f.b_) < tol) & (f.d_ == 0)
+    if (abs(f.b_) < tol) && (f.d_ == 0)
         return PE_Function(f.a_, 0.0, 0.0, 1)
     elseif f.d_ == 0
         return PE_Function(f.a_/f.b_, f.b_, f.base_, 0)
@@ -73,7 +78,7 @@ function -(f1::PE_Function, f2::Piecewise_Function)
 end
 
 function -(f1::Sum_Of_Functions, f2::PE_Function)
-    return +(f1,1*f2)
+    return +(f1,-1*f2)
 end
 function -(f1::Piecewise_Function, f2::PE_Function)
     return +(f1,-1*f2)
@@ -85,9 +90,9 @@ function *(f1::PE_Function,f2::PE_Function)
     diff = f2.base_ - f1.base_
     if abs(diff) < tol
         return PE_Function(f1.a_ * f2.a_, f1.b_ + f2.b_, f1.base_, f1.d_ + f2.d_ )
-    elseif (f1.d_ < tol) & (f1.b_ < tol)
+    elseif (f1.d_ == 0) && (abs(f1.b_) < tol)
         return f1.a_ * f2
-    elseif (f2.d_ < tol) & (f2.b_ < tol)
+    elseif (f2.d_ == 0) && (abs(f2.b_) < tol)
         return f2.a_ * f1
     end
     if diff < 0

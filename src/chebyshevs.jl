@@ -20,7 +20,7 @@ end
 
 
 """
-    get_chevyshevs_up_to(N::Integer, first_kind::Bool = true)
+    get_chebyshevs_up_to(N::Integer, first_kind::Bool = true)
 
 Get the first N chebyshev polynomials returned as a vector of `UnivariateFunction`s.
 The first 20 polynomials of each are precompiled into the binaries for speed. If
@@ -33,7 +33,7 @@ These can be from either the first kind or second kind polynomial sequence.
 ### Returns
 * A `Vector` of `UnivariateFunction`s for each polynomial.
 """
-function get_chevyshevs_up_to(N::Integer, first_kind::Bool = true)
+function get_chebyshevs_up_to(N::Integer, first_kind::Bool = true)
     chebyshevs = Vector{Sum_Of_Functions}(undef, N)
     if N >= number_of_chebyshevs_to_compile_into_binaries
         if first_kind

@@ -25,7 +25,7 @@ include("5_calculus.jl")
 export evaluate_integral, right_integral, left_integral
 
 include("chebyshevs.jl")
-export get_chevyshevs_up_to
+export get_chebyshevs_up_to
 
 include("6_splines_and_interpolation.jl")
 export create_quadratic_spline, create_constant_interpolation_to_right

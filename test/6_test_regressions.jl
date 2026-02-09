@@ -81,13 +81,13 @@ using Test
     @test maximum(abs.(y .- y_approx)) < 0.01
 
     # Getting Chebyshevs
-    first_kinds = get_chevyshevs_up_to(4,true)
+    first_kinds = get_chebyshevs_up_to(4,true)
     @test length(first_kinds) == 4
-    second_kinds = get_chevyshevs_up_to(4,false)
+    second_kinds = get_chebyshevs_up_to(4,false)
     @test length(second_kinds) == 4
 
-    first_kinds = get_chevyshevs_up_to(25,true)
+    first_kinds = get_chebyshevs_up_to(25,true)
     @test length(first_kinds) == 25
-    second_kinds = get_chevyshevs_up_to(25,false)
+    second_kinds = get_chebyshevs_up_to(25,false)
     @test length(second_kinds) == 25
 end

@@ -280,7 +280,7 @@ function fit!(fitter::UnivariateFitter, x_new, y_new)
     if fitter.times_through > 0
         newfun = (fitter.weight_on_new * newfun) + ((1.0 - fitter.weight_on_new) * fitter.fun)
     end
-    if fitter.simplification_frequency > 0 && (fitter.times_through % fitter.simplification_frequency == 0)
+    if fitter.simplification_frequency > 0 && fitter.times_through > 0 && (fitter.times_through % fitter.simplification_frequency == 0)
         newfun = UnivariateFunctions.simplify(newfun, fitter.nbins, fitter.left_, fitter.right_)
     end
     fitter.fun = newfun

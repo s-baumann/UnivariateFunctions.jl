@@ -38,7 +38,7 @@ function isotonic_regression(x::Vector{R}, y::Vector{R}; increasing::Bool = true
     constant_term_has_been_set = false
 
     gradient = (now_y - last_y) / (now_x - last_x)
-    if (abs(gradient) < 1e-10)
+    if (abs(gradient) < tol)
         # The first two points are the same.
         push!(starts_, last_x)
         push!(funcs_, PE_Function(last_y))
@@ -59,12 +59,12 @@ function isotonic_regression(x::Vector{R}, y::Vector{R}; increasing::Bool = true
         now_y = yhat[i]
         #
         gradient = (now_y - last_y) / (now_x - last_x)
-        if (abs(gradient) < 1e-10) & (constant_term_has_been_set == false)
+        if (abs(gradient) < tol) && (constant_term_has_been_set == false)
             # The first two points are the same.
             push!(starts_, last_x)
             push!(funcs_, PE_Function(last_y))
             constant_term_has_been_set = true
-        elseif (gradient <= 1e-10)
+        elseif (gradient <= tol)
             #
         else
             # The first two points are different.
@@ -168,15 +168,15 @@ function monotonic_regression(x::Vector{R}, y::Vector{R}; nbins::Integer = 10, e
     # Solve nonnegative least squares for slopes
     ĝ = NonNegLeastSquares.nonneg_lsq(A, y)
 
-    â = sum(ĝ[1] - ĝ[2])  # intercept is difference of two nonnegative coefficients
+    â = ĝ[1] - ĝ[2]  # intercept is difference of two nonnegative coefficients
 
     starts_ = Vector{Float64}()
     funcs_ = Vector{UnivariateFunction}()
     start_y_accum = â
     for i in 1:(length(edges)-1)
-        st = i == 1 ? -Inf : edges[i][1]
+        st = i == 1 ? -Inf : edges[i]
         gradient = ĝ[i+2,1]
-        funn = PE_Function(start_y_accum) + PE_Function(gradient, 0.0, edges[i][1], 1)
+        funn = PE_Function(start_y_accum) + PE_Function(gradient, 0.0, edges[i], 1)
         push!(starts_, st)
         push!(funcs_, funn)
         start_y_accum = start_y_accum + gradient * (i < length(edges) ? Δ[i] : 0.0)

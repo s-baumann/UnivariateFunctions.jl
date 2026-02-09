@@ -3,7 +3,7 @@ import SchumakerSpline.evaluate
 function evaluate(f::Piecewise_Function, point::Real)
     which_function = searchsortedlast(f.starts_, point)
     if which_function == 0
-        return evaluate(Undefined_Function(), point)
+        return missing
     end
     return evaluate(f.functions_[which_function], point)
 end
@@ -49,36 +49,33 @@ function create_common_pieces(f1::Piecewise_Function,f2::Piecewise_Function)
         which_2 = searchsortedlast(f2.starts_, point)
         functions2_[i] = (which_2 == 0) ? Undefined_Function() : f2.functions_[which_2]
     end
-    return Piecewise_Function(starts_, functions1_), Piecewise_Function(starts_, functions2_)
+    return starts_, functions1_, functions2_
 end
 
 function +(f1::Piecewise_Function,f2::Piecewise_Function)
-    c_f1, c_f2 = create_common_pieces(f1,f2)
-    starts_ = c_f1.starts_
+    starts_, funcs1, funcs2 = create_common_pieces(f1,f2)
     number_of_pieces = length(starts_)
     functions_ = Vector{UnivariateFunction}(undef, number_of_pieces)
     for i in 1:number_of_pieces
-        functions_[i] = c_f1.functions_[i] + c_f2.functions_[i]
+        functions_[i] = funcs1[i] + funcs2[i]
     end
     return Piecewise_Function(starts_, functions_)
 end
 function *(f1::Piecewise_Function,f2::Piecewise_Function)
-    c_f1, c_f2 = create_common_pieces(f1,f2)
-    starts_ = c_f1.starts_
+    starts_, funcs1, funcs2 = create_common_pieces(f1,f2)
     number_of_pieces = length(starts_)
     functions_ = Vector{UnivariateFunction}(undef, number_of_pieces)
     for i in 1:number_of_pieces
-        functions_[i] = c_f1.functions_[i] * c_f2.functions_[i]
+        functions_[i] = funcs1[i] * funcs2[i]
     end
     return Piecewise_Function(starts_, functions_)
 end
 function -(f1::Piecewise_Function,f2::Piecewise_Function)
-    c_f1, c_f2 = create_common_pieces(f1,f2)
-    starts_ = c_f1.starts_
+    starts_, funcs1, funcs2 = create_common_pieces(f1,f2)
     number_of_pieces = length(starts_)
     functions_ = Vector{UnivariateFunction}(undef, number_of_pieces)
     for i in 1:number_of_pieces
-        functions_[i] = c_f1.functions_[i] - c_f2.functions_[i]
+        functions_[i] = funcs1[i] - funcs2[i]
     end
     return Piecewise_Function(starts_, functions_)
 end

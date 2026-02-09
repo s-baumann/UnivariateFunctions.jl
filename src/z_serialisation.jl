@@ -17,6 +17,9 @@ function DataFrames.DataFrame(uf::Piecewise_Function)
     for i in 1:length(uf.starts_)
         s = uf.starts_[i]
         subdd = DataFrames.DataFrame(uf.functions_[i])
+        if !hasproperty(subdd, :group)
+            subdd[!, :group] .= UUIDs.uuid4()
+        end
         subdd[!, :segment_start] .= s
         push!(ll, subdd)
     end
@@ -25,7 +28,7 @@ end
 
 
 function PE_Function(dd::Union{DataFrame,DataFrameRow})
-    if isnan(dd.a[1]) | isnan(dd.b[1]) | isnan(dd.base[1]) | isnan(dd.d[1])
+    if isnan(dd.a[1]) || isnan(dd.b[1]) || isnan(dd.base[1]) || isnan(dd.d[1])
         return Undefined_Function()
     end
     return PE_Function(dd.a[1], dd.b[1], dd.base[1], dd.d[1])
@@ -58,7 +61,7 @@ function UnivariateFunction(df::DataFrame)
         return Piecewise_Function(df)
     elseif :group in noms
         return Sum_Of_Functions(df)
-    elseif (:a in noms) & (:b in noms) & (:base in noms) & (:d in noms) & (nrow(df) == 1)
+    elseif (:a in noms) && (:b in noms) && (:base in noms) && (:d in noms) && (nrow(df) == 1)
         return PE_Function(df)
     else
         error("DataFrame does not have the right columns to convert to a UnivariateFunction. You dont have :segment_start so its not a Piecewise_Function, you dont have :group so its not a Sum_Of_Functions, and you dont have the right columns to be a PE_Function or you have more than one row.")

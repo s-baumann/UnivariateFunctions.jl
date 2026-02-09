@@ -28,10 +28,7 @@ function -(f::Sum_Of_Functions, number::Real)
     return +(f, -number)
 end
 function *(f::Sum_Of_Functions, number::Real)
-    funcs = deepcopy(f.functions_)
-    for i in 1:length(funcs)
-        funcs[i] = funcs[i] * number
-    end
+    funcs = PE_Function[func * number for func in f.functions_]
     return Sum_Of_Functions(funcs)
 end
 function /(f::Sum_Of_Functions, number::Real)
@@ -62,12 +59,13 @@ function -(f1::Piecewise_Function, f2::Sum_Of_Functions)
 end
 
 function *(f1::Sum_Of_Functions,f2::Sum_Of_Functions)
-    results = Vector{Sum_Of_Functions}(undef, length(f1.functions_))
-    for i in 1:length(f1.functions_)
-        new_funcs = f1.functions_[i] * f2
-        results[i] = new_funcs
+    terms = Vector{UnivariateFunction}()
+    for fi in f1.functions_
+        for fj in f2.functions_
+            push!(terms, fi * fj)
+        end
     end
-    return Sum_Of_Functions(results)
+    return Sum_Of_Functions(terms)
 end
 function *(f1::Sum_Of_Functions, f2::Piecewise_Function)
     return Piecewise_Function(f2.starts_, f1 .* f2.functions_)

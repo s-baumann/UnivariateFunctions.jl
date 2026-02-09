@@ -36,12 +36,12 @@ struct PE_Function{F<:Real,I<:Integer} <: UnivariateFunction
         return PE_Function(a_, 0.0, 0.0, 0)
     end
     function PE_Function(a_::R,b_::S,base_::T,d_::I) where R<:Real where S<:Real where T<:Real where I<:Integer
-        promo_type = promote_type(T,S,T)
+        promo_type = promote_type(R,S,T)
         if d_ < 0
             error("Negative polynomial powers are not supported by this package")
             # These are banned due to the complications for calculus. Most
             # divisions are not allowed for the same reason.
-        elseif (abs(b_) < tol) & (d_ == 0)
+        elseif (abs(b_) < tol) && (d_ == 0)
             return new{promo_type,I}(promo_type(a_),promo_type(0.0),promo_type(0.0),I(0))
         elseif abs(a_) < tol
             return new{promo_type,I}(promo_type(0.0),promo_type(0.0),promo_type(0.0),I(0))
@@ -62,7 +62,7 @@ Base.broadcastable(e::PE_Function) = Ref(e)
 """
     Sum_Of_Functions <: UnivariateFunction
 
-This function contants a vector of UnivariateFunctions. When evaluted it
+This function contains a vector of UnivariateFunctions. When evaluated it
 adds the evaluations of these functions and returns the sum.
 """
 struct Sum_Of_Functions <: UnivariateFunction
@@ -71,11 +71,10 @@ struct Sum_Of_Functions <: UnivariateFunction
         return funcs
     end
     function Sum_Of_Functions(funcs::Vector)
-        undefined_funcs  = funcs[isa.(funcs, Ref(Undefined_Function))]
-        if length(undefined_funcs) > 0
-            return Undefined_Function()
-        end
         functions_ = clean_array_of_functions(funcs)
+        if isa(functions_, Undefined_Function)
+            return functions_
+        end
         return new(functions_)
     end
 end
@@ -84,8 +83,8 @@ Base.broadcastable(e::Sum_Of_Functions) = Ref(e)
 """
     Piecewise_Function <: UnivariateFunction
 
-This function contants a vector of locations in the x space and a vector of UnivariateFunctions.
-When evaludated it uses these vectors as a lookup. It chooses the correct UnivariateFunction
+This function contains a vector of locations in the x space and a vector of UnivariateFunctions.
+When evaluated it uses these vectors as a lookup. It chooses the correct UnivariateFunction
 and evaluates it.
 """
 struct Piecewise_Function <: UnivariateFunction
@@ -137,8 +136,7 @@ function trim_piecewise_function(func::Piecewise_Function, left_limit::R, right_
 end
 
 function deal_with_piecewise_inputs(starts::Vector{R}, functions::Vector) where R<:Real
-    where_are_pw_bits = findall(typeof.(functions) .== UnivariateFunctions.Piecewise_Function)
-    if length(where_are_pw_bits) < 1
+    if !any(f -> isa(f, Piecewise_Function), functions)
         return starts, functions
     else
         stt = Vector{R}()
@@ -172,7 +170,7 @@ function deal_with_piecewise_inputs(starts::Vector{R}, functions::Vector) where 
 end
 
 function first_entries(vec::Vector, how_many::Integer)
-    if how_many < 11
+    if how_many < 1
         return Vector{Any}()
     elseif how_many > length(vec)
         return vec
@@ -198,57 +196,48 @@ function take_piecewise_slice(starts::Vector{<:Real}, functions::Vector, from::R
     return starts[from_i:to_i], functions[from_i:to_i]
 end
 
-function find(a::BitArray)
-    len = length(a)
-    indices = Vector{Int}()
-    for i in 1:len
-        if a[i]
-            append!(indices, i)
-        end
-    end
-    return indices
-end
-
 function rationalise_array_of_functions(funcs::Vector{PE_Function})
     len = length(funcs)
     if len < 2
         return funcs
     end
-    attributes = hcat(map(f -> f.b_, funcs), map(f -> f.base_, funcs), map(f -> f.d_, funcs) )
-    multipliers = map(f -> f.a_, funcs)
-    unique_attributes = unique(attributes, dims = 1)
-    new_len = size(unique_attributes)[1]
-    new_funcs = Vector{PE_Function}(undef,new_len)
-    for i in 1:new_len
-        atts =  transpose(unique_attributes[i,:])
-        which_multipliers = all(attributes .== atts, dims=2)
-        multiplier = sum(multipliers[find(which_multipliers)])
-        new_funcs[i] = PE_Function(multiplier, atts[1], atts[2], convert(Int, atts[3]))
+    groups = Dict{Tuple{Float64,Float64,Int}, Float64}()
+    for f in funcs
+        key = (f.b_, f.base_, f.d_)
+        groups[key] = get(groups, key, 0.0) + f.a_
+    end
+    new_funcs = Vector{PE_Function}(undef, length(groups))
+    i = 0
+    for ((b, base, d), a) in groups
+        i += 1
+        new_funcs[i] = PE_Function(a, b, base, d)
     end
     return new_funcs
 end
 
 function clean_array_of_functions(funcs::Vector)
-    undefined_funcs  = funcs[isa.(funcs, Ref(Undefined_Function))]
-    piecewise_funcs  = funcs[isa.(funcs, Ref(Piecewise_Function))]
-    if length(undefined_funcs) > 0
-        return Undefined_Function()
-    elseif length(piecewise_funcs) > 0
-        error("You cannot directly construct a Sum_Of_Functions with a Piecewise_Function in the input array. Instead add up the piecewise functions directly, for instance typing 'f1 + f2' for the two piecewise functions.")
-    end
-    pe_funcs  = funcs[isa.(funcs, Ref(PE_Function))]
-    pe_funcs = pe_funcs[abs.(map( x -> x.a_, pe_funcs)) .>= eps()]
-    sum_funcs = funcs[isa.(funcs, Ref(Sum_Of_Functions))]
-    if length(sum_funcs) > 0
-        for sf in sum_funcs
-            pe_funcs_in_sf = clean_array_of_functions(sf.functions_)
-            pe_funcs       = vcat(pe_funcs, pe_funcs_in_sf)
+    pe_funcs = Vector{PE_Function}()
+    for f in funcs
+        if isa(f, Undefined_Function)
+            return Undefined_Function()
+        elseif isa(f, Piecewise_Function)
+            error("You cannot directly construct a Sum_Of_Functions with a Piecewise_Function in the input array. Instead add up the piecewise functions directly, for instance typing 'f1 + f2' for the two piecewise functions.")
+        elseif isa(f, PE_Function)
+            if abs(f.a_) >= eps()
+                push!(pe_funcs, f)
+            end
+        elseif isa(f, Sum_Of_Functions)
+            for sf in f.functions_
+                if abs(sf.a_) >= eps()
+                    push!(pe_funcs, sf)
+                end
+            end
         end
     end
     if length(pe_funcs) == 0
         return [PE_Function(0.0,0.0,0.0,0)]
     end
-    simplified_functions = rationalise_array_of_functions(convert(Vector{PE_Function}, pe_funcs))
+    simplified_functions = rationalise_array_of_functions(pe_funcs)
     return simplified_functions
 end
 
@@ -298,11 +287,18 @@ function ^(f1::UnivariateFunction,num::Integer) # This will get overridden for u
     elseif num == 2
         return f1 * f1
     else
-        product = f1 * f1
-        for i in 1:(num-2)
-            product = product * f1
+        # Exponentiation by squaring: O(log n) multiplications
+        result = PE_Function(1.0,0.0,0.0,0)
+        base = f1
+        n = num
+        while n > 0
+            if isodd(n)
+                result = result * base
+            end
+            base = base * base
+            n >>= 1
         end
-        return product
+        return result
     end
 end
 
@@ -325,7 +321,7 @@ function change_base_of_PE_Function(f::PE_Function, new_base::Real)
     end
     # First the exponential part.
     new_a = f.a_ * exp(f.b_*diff)
-    if new_a < tol
+    if abs(new_a) < tol
         error("Underflow problem. Changing to this base cannot be done")
     end
     # Now the polynomial part.
@@ -333,9 +329,9 @@ function change_base_of_PE_Function(f::PE_Function, new_base::Real)
         return PE_Function(new_a, f.b_, new_base, 0)
     else
         n = f.d_
-        funcs = Vector{UnivariateFunction}(undef,n+1)
+        funcs = Vector{PE_Function}(undef,n+1)
         for r in 0:n
-            binom_coeff = factorial(n) / (factorial(r) * factorial(n-r))
+            binom_coeff = binomial(n, r)
             new_multiplier = binom_coeff * new_a * diff^r
             new_func = PE_Function(new_multiplier, f.b_, new_base, n-r )
             funcs[r+1] = new_func
@@ -347,12 +343,14 @@ end
 # Conversions for linearly rescaling inputs.
 """
     convert_to_linearly_rescale_inputs(f::UnivariateFunction, alpha::Real, beta::Real)
-This alters a function so that whenever we put in x it is like we put in `alpha * x + beta`.
+Creates a new function `g` such that `g(alpha * x + beta) = f(x)`, or equivalently
+`g(y) = f((y - beta) / alpha)`. This remaps the domain of `f` so that the input
+range `[x_lo, x_hi]` maps to `[alpha * x_lo + beta, alpha * x_hi + beta]`.
 
 ### Inputs
 * `f` - A `UnivariateFunction`.
-* `alpha` - The slope of the rescaling.
-* `beta` - The level of the rescaling.
+* `alpha` - The slope of the domain rescaling.
+* `beta` - The offset of the domain rescaling.
 ### Returns
 * A `UnivariateFunction` of the type that you input to the function.
 """
@@ -360,12 +358,11 @@ function convert_to_linearly_rescale_inputs(f::Undefined_Function, alpha::Real, 
     return f
 end
 function convert_to_linearly_rescale_inputs(f::PE_Function, alpha::Real, beta::Real)
-    # We want the change the function so that whenever we put in x it is like we put in alpha x + beta.
-    beta = beta / alpha
-    alpha = 1.0/alpha
-    new_base_ = (f.base_ + beta)/alpha
-    new_multiplier = f.a_ * alpha^(f.d_)
-    new_power_ = f.b_ * alpha
+    # We create g such that g(alpha*x + beta) = f(x), i.e. g(y) = f((y - beta) / alpha).
+    # new_base is the image of f.base_ under the forward map: y = alpha*x + beta
+    new_base_ = f.base_ * alpha + beta
+    new_multiplier = f.a_ / alpha^(f.d_)
+    new_power_ = f.b_ / alpha
     return PE_Function(new_multiplier, new_power_, new_base_, f.d_)
 end
 function convert_to_linearly_rescale_inputs(f::Sum_Of_Functions, alpha::Real, beta::Real)

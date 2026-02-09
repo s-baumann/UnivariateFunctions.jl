@@ -50,7 +50,7 @@ function create_ols_approximation(y::Vector{<:Real}, x::Vector{Q}, base_x::WW = 
     return create_ols_approximation(y, xx, base, degree, intercept)
 end
 
-function get_cholesky_coefficients(chebyshev::Sum_Of_Functions, y::Vector{<:Real}, unnormalised_nodes::Vector{<:Real})
+function get_chebyshev_coefficients(chebyshev::Sum_Of_Functions, y::Vector{<:Real}, unnormalised_nodes::Vector{<:Real})
     chebyshev_on_nodes = evaluate.(Ref(chebyshev), unnormalised_nodes)
     a = sum(y .* chebyshev_on_nodes) / sum(chebyshev_on_nodes .^ 2)
     return a
@@ -79,8 +79,8 @@ function create_chebyshev_approximation(func::Function, nodes::Integer, degree::
     unnormalised_nodes = -cos.( (((2 .* k) .- 1) ./ (2 * nodes)) .* pi    )
     normalised_nodes = ((unnormalised_nodes .+ 1) .* ((right-left)/2)) .+ left
     y = func.(normalised_nodes)
-    chebyshevs = get_chevyshevs_up_to(degree, true)
-    a = get_cholesky_coefficients.(chebyshevs, Ref(y), Ref(unnormalised_nodes))
+    chebyshevs = get_chebyshevs_up_to(degree, true)
+    a = get_chebyshev_coefficients.(chebyshevs, Ref(y), Ref(unnormalised_nodes))
     transformed_chebyshevs = convert_to_linearly_rescale_inputs.(chebyshevs, (right-left)/2, +(right+left)/2)
     # Note that these alpha and beta parameters in the convert_to_linearly_rescale_inputs function differ from those in Judd because those did not work in this context.
     all_terms = a .* transformed_chebyshevs

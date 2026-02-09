@@ -180,20 +180,18 @@ end
 
 const global_base_date = ZonedDateTime(1970,1,1,0,0,0,tz"UTC")
 """
-    period_length(a::Dates.DatePeriod, base::Date = global_base_date)
+    period_length(period::Dates.DatePeriod)
 
-Period length is designed to convert `TimePeriod` objects to a float in a consistent way to `zdt2unix`.
-So effectively the seconds_between method is calculated with start and end dates being those
-at the start and end of a `Dates.DatePeriod`. This is slightly complicated because
+Converts a `DatePeriod` to a float representing years, measured from `global_base_date`.
+So effectively the `years_between` method is calculated with start and end dates being those
+at the start and end of the period. This is slightly complicated because
 a period like `Month(3)` might have slightly different numbers of total days depending
-on when in the year it is. So a base date has to be input. The period is then
-measured starting from this base date.
+on when in the year it is, so the period is always measured starting from `global_base_date`.
 
 ### Inputs
-* `period` - A period.
-* `base` - A date from which the period will be measured from.
+* `period` - A `Dates.DatePeriod`.
 ### Returns
-* A `Real`.
+* A `Real` representing the period length in years.
 """
 function period_length(period::Dates.DatePeriod)
     return years_between(global_base_date+period, global_base_date)

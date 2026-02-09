@@ -25,7 +25,18 @@ using Test
 
     uf2 = UnivariateFunction(DataFrames.DataFrame(uf))
     @test isa(uf2, Undefined_Function)
-    
+
+    # Round-trip test for mixed Piecewise_Function (PE + Sum segments)
+    pe1 = PE_Function(3.0, 0.0, 0.0, 0)  # constant 3
+    sum1 = PE_Function(1.0, 0.0, 0.0, 1) + PE_Function(2.0, 0.0, 0.0, 0)  # x + 2
+    pw_mixed = Piecewise_Function([0.0, 5.0], [pe1, sum1])
+    df_mixed = DataFrames.DataFrame(pw_mixed)
+    pw_roundtrip = UnivariateFunction(df_mixed)
+    test_pts = [0.0, 2.5, 5.0, 7.5, 10.0]
+    for p in test_pts
+        @test abs(evaluate(pw_mixed, p) - evaluate(pw_roundtrip, p)) < 1e-10
+    end
+
 end
 
 

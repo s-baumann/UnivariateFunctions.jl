@@ -40,7 +40,7 @@ See the [Regression and Smoothing](Regression.md) page for detailed documentatio
 
 ## Date Handling
 
-* All base dates are immediately converted to floats and are not otherwise saved. Thus there is no difference between a `PE_Function` created with a base as a float and one created with the matching date. This is done to simplify the code. All date conversions is done by finding the year fractions between the date and the global base date of `Date(2000,1,1)`. This particular global base date should not affect anything as long as it is consistent. It is relatively trivial to change it (in the `date_conversions.jl` file) and recompile however if desired.
+* All base dates are immediately converted to floats and are not otherwise saved. Thus there is no difference between a `PE_Function` created with a base as a float and one created with the matching date. This is done to simplify the code. All date conversions is done by finding the year fractions between the date and the global base date of `ZonedDateTime(1970,1,1,0,0,0,tz"UTC")`. This particular global base date should not affect anything as long as it is consistent. It is relatively trivial to change it (in the `date_conversions.jl` file) and recompile however if desired.
 
 ## Major limitations
 * It is not possible to divide by univariate functions or raise them by a negative power.

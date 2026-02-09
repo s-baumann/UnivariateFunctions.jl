@@ -110,6 +110,19 @@ using Test
     @test evaluate(sum4, 5.0) == evaluate(f1 + f2 + f3, 5.0)
     @test abs(evaluate(sum4, 5.0) - 2*evaluate(f3, 5.0) - evaluate(f1 + f2 - f3, 5.0)) < 0.001
 
+    ### Cross-type subtraction tests (using values large enough to distinguish + from -)
+    pe_a = PE_Function(10.0, 0.0, 0.0, 0)  # constant 10
+    pe_b = PE_Function(3.0, 0.0, 0.0, 0)   # constant 3
+    pe_c = PE_Function(2.0, 0.0, 0.0, 1)   # 2x
+    sof_ab = Sum_Of_Functions([pe_a, pe_c])  # 10 + 2x
+    # Sum_Of_Functions - PE_Function
+    @test abs(evaluate(sof_ab - pe_b, 5.0) - 17.0) < tol  # (10 + 2*5) - 3 = 17
+    # PE_Function - Sum_Of_Functions
+    @test abs(evaluate(pe_b - sof_ab, 5.0) - (-17.0)) < tol  # 3 - (10 + 2*5) = -17
+    # Sum_Of_Functions - Sum_Of_Functions
+    sof_cd = Sum_Of_Functions([pe_b, pe_c])  # 3 + 2x
+    @test abs(evaluate(sof_ab - sof_cd, 5.0) - 7.0) < tol  # (10+2*5) - (3+2*5) = 7
+
     ### Changing of base
     f1_unchanged = change_base_of_PE_Function(f1, 3.0)
     @test isa(f1_unchanged, UnivariateFunctions.PE_Function)
@@ -162,7 +175,7 @@ using Test
 
     # Linear gradient constant
     @test abs(evaluate(derivative(pe_lin),5.0) - evaluate(derivative(pe_lin),1.0) ) < tol
-    @test typeof(derivative(pe_lin)) == UnivariateFunctions.Sum_Of_Functions
+    @test typeof(derivative(pe_lin)) <: UnivariateFunctions.PE_Function
     # This is also linear
     @test abs(evaluate(derivative(derivative(pe_quad)),5.0) -evaluate(derivative(derivative(pe_quad)),9.0) ) < tol
     # derivative into a sum of functions
@@ -186,6 +199,30 @@ using Test
     @test (evaluate(l_int, 3.8) - evaluate_integral(pe_exp_quad,0.2,3.8)) < tol
     r_int = right_integral(pe_exp_quad, 3.8)
     @test (evaluate(r_int, 0.2) - evaluate_integral(pe_exp_quad,0.2,3.8)) < tol
+
+    ## Testing integral guards for piecewise functions with out-of-domain limits
+    pw = Piecewise_Function([1.0, 5.0], [pe_const, pe_lin])
+    # right_integral before domain start returns Undefined_Function
+    @test isa(right_integral(pw, 0.0), Undefined_Function)
+    # left_integral before domain start returns Undefined_Function
+    @test isa(left_integral(pw, 0.0), Undefined_Function)
+    # evaluate_integral before domain start returns missing
+    @test ismissing(evaluate_integral(pw, 0.0, 0.5))
+    @test ismissing(evaluate_integral(pw, -1.0, 2.0))
+    # evaluate_integral within domain works normally
+    @test !ismissing(evaluate_integral(pw, 1.0, 5.0))
+    # right_integral and left_integral within domain work normally
+    @test isa(right_integral(pw, 1.0), Piecewise_Function)
+    @test isa(left_integral(pw, 5.0), Piecewise_Function)
+
+    ## Testing higher powers on Sum_Of_Functions
+    sum_for_pow = PE_Function(2.0, 0.0, 0.0, 0) + PE_Function(1.0, 0.0, 0.0, 1)  # 2 + x
+    pow3 = sum_for_pow ^ 3  # (2+x)^3
+    @test abs(evaluate(pow3, 1.0) - 27.0) < 1e-06  # (2+1)^3 = 27
+    @test abs(evaluate(pow3, 3.0) - 125.0) < 1e-06  # (2+3)^3 = 125
+    pow5 = sum_for_pow ^ 5  # (2+x)^5
+    @test abs(evaluate(pow5, 1.0) - 243.0) < 1e-03  # (2+1)^5 = 243
+    @test abs(evaluate(pow5, 2.0) - 1024.0) < 1e-03  # (2+2)^5 = 1024
 
     ## Testing linear rescaling
     # For PE_Functions

@@ -34,12 +34,15 @@ end
 function right_integral(f::Piecewise_Function, left::R) where R<:AbstractFloat
     whole_number_of_intervals = length(f.starts_)
     which_interval_contains_left = searchsortedlast(f.starts_, left)
+    if which_interval_contains_left == 0
+        return Undefined_Function()
+    end
     number_of_intervals = whole_number_of_intervals - which_interval_contains_left + 1
     starts_    =  Vector{R}(undef, number_of_intervals)
     starts_[1] = left
     first_indefinite_integral = indefinite_integral(f.functions_[which_interval_contains_left])
     functions_    =  Vector{UnivariateFunction}(undef, number_of_intervals)
-    if typeof(first_indefinite_integral) == UnivariateFunctions.Undefined_Function
+    if isa(first_indefinite_integral, Undefined_Function)
         return Undefined_Function()
     end
     functions_[1] = first_indefinite_integral - evaluate(first_indefinite_integral, left)
@@ -48,10 +51,9 @@ function right_integral(f::Piecewise_Function, left::R) where R<:AbstractFloat
     end
     displacement  = which_interval_contains_left - 1
     for i in 2:number_of_intervals
-        println("")
         starts_[i]    = f.starts_[i + displacement]
         indef_int = indefinite_integral(f.functions_[i + displacement])
-        if typeof(indef_int) == UnivariateFunctions.Undefined_Function
+        if isa(indef_int, Undefined_Function)
             return Piecewise_Function(starts_[1:i], vcat(functions_[1:(i-1)], Undefined_Function()  ) )
         end
         value_at_previous_end = evaluate(functions_[i-1], starts_[i])
@@ -68,7 +70,7 @@ This calculates the integral of a function from a right limit and returns it as 
 So if you were to then evaluate this integral function at a point x then you would
 get the integral between right and x.
 
-If a `Date`, `DateTime` is input then it is first converted to a scalar with the `zdt2unix` function.
+If a `Date`, `DateTime` is input then it is first converted to a scalar with the `years_from_global_base_date` function.
 
 ### Inputs
 * `f` - A `UnivariateFunction`.
@@ -93,12 +95,15 @@ end
 function left_integral(f::Piecewise_Function, right::R) where R<:AbstractFloat
     whole_number_of_intervals = length(f.starts_)
     which_interval_contains_right = searchsortedlast(f.starts_, right)
+    if which_interval_contains_right == 0
+        return Undefined_Function()
+    end
     number_of_intervals = which_interval_contains_right
     starts_    =  Vector{R}(undef, number_of_intervals)
     starts_[number_of_intervals] = f.starts_[which_interval_contains_right]
     last_indefinite_integral = indefinite_integral(f.functions_[which_interval_contains_right])
     functions_    =  Vector{UnivariateFunction}(undef, number_of_intervals)
-    if typeof(last_indefinite_integral) == UnivariateFunctions.Undefined_Function
+    if isa(last_indefinite_integral, Undefined_Function)
         return Undefined_Function()
     end
     functions_[number_of_intervals] = evaluate(last_indefinite_integral, right) - last_indefinite_integral
@@ -109,7 +114,7 @@ function left_integral(f::Piecewise_Function, right::R) where R<:AbstractFloat
         starts_[i]    = f.starts_[i]
         value_at_next_start = evaluate(functions_[i+1], starts_[i+1])
         indef_int = indefinite_integral(f.functions_[i])
-        if typeof(indef_int) == UnivariateFunctions.Undefined_Function
+        if isa(indef_int, Undefined_Function)
             return Piecewise_Function(starts_[(i+1):which_interval_contains_right], functions_[(i+1):which_interval_contains_right]   )
         end
         functions_[i] = evaluate(indef_int, starts_[i+1] ) - indef_int + value_at_next_start
@@ -123,7 +128,7 @@ end
 
 This calculates the integral of a function from a left limit to a right limit and returns a scalar.
 
-If a `Date`, `DateTime` is input then it is first converted to a scalar with the `zdt2unix` function.
+If a `Date`, `DateTime` is input then it is first converted to a scalar with the `years_from_global_base_date` function.
 
 ### Inputs
 * `f` - A `UnivariateFunction`.
@@ -148,5 +153,16 @@ function evaluate_integral(f::UnivariateFunction,left::Q, right::W) where Q<:Uni
 end
 
 function evaluate_integral(f::Piecewise_Function,left::AbstractFloat, right::AbstractFloat)
-    return evaluate(right_integral(f, left), right)
+    left_i  = searchsortedlast(f.starts_, left)
+    right_i = searchsortedlast(f.starts_, right)
+    if left_i == 0 || right_i == 0
+        return missing
+    end
+    total = 0.0
+    for i in left_i:right_i
+        seg_left  = (i == left_i) ? left : f.starts_[i]
+        seg_right = (i < right_i) ? f.starts_[i+1] : right
+        total += evaluate_integral(f.functions_[i], seg_left, seg_right)
+    end
+    return total
 end
