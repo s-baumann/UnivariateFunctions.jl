@@ -234,13 +234,14 @@ mutable struct UnivariateFitter
     weight_on_new::Float64
     left_::Float64
     right_::Float64
+    min_bins_for_simplification_::Int
 end
 
 function UnivariateFitter(method::Symbol; nbins::Int=10, equally_spaced_bins::Bool=true,
                           weight_on_new::Float64=1.0, simplification_frequency::Int=0,
-                          left::Real=-Inf, right::Real=Inf)
+                          left::Real=-Inf, right::Real=Inf, min_bins_for_simplification::Int=25)
     return UnivariateFitter(PE_Function(0.0, 0.0, 0.0, 0), method, 0, simplification_frequency,
-                            nbins, equally_spaced_bins, weight_on_new, Float64(left), Float64(right))
+                            nbins, equally_spaced_bins, weight_on_new, Float64(left), Float64(right), min_bins_for_simplification)
 end
 
 function evaluate(fitter::UnivariateFitter, x)
@@ -278,10 +279,11 @@ function fit!(fitter::UnivariateFitter, x_new, y_new)
         end
     end
     if fitter.times_through > 0
-        newfun = (fitter.weight_on_new * newfun) + ((1.0 - fitter.weight_on_new) * fitter.fun)
+        new_weight = min( 1 / (fitter.times_through+1), fitter.weight_on_new)
+        newfun = (new_weight * newfun) + ((1.0 - new_weight) * fitter.fun)
     end
     if fitter.simplification_frequency > 0 && fitter.times_through > 0 && (fitter.times_through % fitter.simplification_frequency == 0)
-        newfun = UnivariateFunctions.simplify(newfun, fitter.nbins, fitter.left_, fitter.right_)
+        newfun = UnivariateFunctions.simplify(newfun, fitter.min_bins_for_simplification_, fitter.left_, fitter.right_)
     end
     fitter.fun = newfun
     fitter.times_through += 1
