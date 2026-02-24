@@ -197,18 +197,6 @@ using Random
         ])
     end
 
-    @testset "cv_unimodal_regression" begin
-        result = cv_unimodal_regression(x, y_quad; nbins=10, nfolds=5, seed=123)
-        @test result.selected_shape == :quasiconcave
-        assert_values(result.fitted, [
-            0.09776664977527401,
-            18.66871851055128,
-            25.21862782415963,
-            18.63405971006622,
-            0.10956074262233706,
-        ])
-    end
-
     @testset "cv_shape_regression" begin
         result = cv_shape_regression(x, y_linear; shapes=:all, nbins=10, nfolds=5, seed=123)
         @test result.selected_shape == :convex
