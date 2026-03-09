@@ -270,7 +270,7 @@ function fit!(fitter::UnivariateFitter, x_new::Vector{<:Real}, y_new::Vector{<:R
     fitter.times_through += 1
 end
 
-
+const  DEFAULT_COEFFICIENTS_FOR_ADJUSTED_FITTER = (0.0, 1.0)
 
 """
     UnivariateAdjustedFitter
@@ -355,7 +355,7 @@ function fit_shape(x_new::Vector{<:Real}, y_new::Vector{<:Real}, fitter::Union{U
 end
 
 function evaluate(fitter::UnivariateAdjustedFitter, x::Real, group)
-    coeffs = fitter.coefficients[group]
+    coeffs = group in keys(fitter.coefficients) ? fitter.coefficients[group] : DEFAULT_COEFFICIENTS_FOR_ADJUSTED_FITTER
     return coeffs[1] + coeffs[2] * fitter.fun(x)
 end
 function (fitter::UnivariateAdjustedFitter)(x::Real, group)
@@ -377,7 +377,7 @@ function fit!(fitter::UnivariateAdjustedFitter, x_new::Vector{<:Real}, y_new::Ve
     # Onboarding new groups.
     new_groups = setdiff(unique(groups), keys(fitter.coefficients))
     for g in new_groups
-        fitter.coefficients[g] = (0.0, 1.0)
+        fitter.coefficients[g] = DEFAULT_COEFFICIENTS_FOR_ADJUSTED_FITTER
     end
     # Undo group coefficients to get y into the shared function's space.
     y_adjusted = fitter.adjust_for_groups ? [(y_new[i] - fitter.coefficients[groups[i]][1]) / fitter.coefficients[groups[i]][2] for i in eachindex(y_new)] : copy(y_new)
