@@ -221,6 +221,7 @@ end
     @test fitter.left_ == -Inf
     @test fitter.right_ == Inf
     @test fitter.adjust_for_groups == true
+    @test fitter.fit_intercept == true
     @test fitter.coefficient_bounds == ((-1.0, 1.0), (0.1, 2.5))
     @test isempty(fitter.coefficients)
     # Initial function is zero
@@ -229,7 +230,7 @@ end
     # Custom constructor
     fitter2 = UnivariateAdjustedFitter(:decreasing; nbins=20, weight_on_new=0.5,
                                         simplification_frequency=3, left=0.0, right=10.0,
-                                        adjust_for_groups=false,
+                                        adjust_for_groups=false, fit_intercept=false,
                                         coefficient_bounds=((-5.0, 5.0), (0.5, 3.0)))
     @test fitter2.method == :decreasing
     @test fitter2.nbins == 20
@@ -238,6 +239,7 @@ end
     @test fitter2.left_ == 0.0
     @test fitter2.right_ == 10.0
     @test fitter2.adjust_for_groups == false
+    @test fitter2.fit_intercept == false
     @test fitter2.coefficient_bounds == ((-5.0, 5.0), (0.5, 3.0))
 
     # Type stability of coefficient_bounds
@@ -492,4 +494,161 @@ end
     # Unknown method should error
     fitter_bad = UnivariateAdjustedFitter(:nonexistent; left=0.0, right=10.0)
     @test_throws ErrorException UnivariateFunctions.fit!(fitter_bad, x, 2.0 .* x, groups)
+end
+
+@testset "UnivariateAdjustedFitter fit_intercept=false Single Group" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(44)
+    n = 200
+    x = sort(rand(n) .* 10.0)
+    # y = 3.0 * f(x) with no intercept, where f is roughly linear increasing
+    y = 3.0 .* (2.0 .* x) .+ randn(n) .* 0.1
+    groups = fill(:A, n)
+
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, left=0.0, right=10.0,
+                                       fit_intercept=false,
+                                       coefficient_bounds=((-5.0, 5.0), (0.1, 10.0)))
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+
+    @test fitter.times_through == 1
+    @test fitter.fit_intercept == false
+
+    # Intercept should be forced to zero (within bounds and blending)
+    a_A, b_A = fitter.coefficients[:A]
+    @test a_A == 0.0
+
+    # b should be finite and positive
+    @test isfinite(b_A)
+    @test b_A > 0.0
+
+    # Evaluate should work
+    @test isfinite(fitter(5.0, :A))
+end
+
+@testset "UnivariateAdjustedFitter fit_intercept=false Multi-Group" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(66)
+    n = 200
+
+    # Shared shape: f(x) ≈ x (increasing)
+    # Group A: y = 2.0 * f(x) + noise  (scale=2)
+    # Group B: y = 0.5 * f(x) + noise  (scale=0.5)
+    x = sort(rand(n) .* 10.0)
+    groups = [isodd(i) ? :A : :B for i in 1:n]
+    y = Vector{Float64}(undef, n)
+    for i in 1:n
+        if groups[i] == :A
+            y[i] = 2.0 * x[i] + randn() * 0.1
+        else
+            y[i] = 0.5 * x[i] + randn() * 0.1
+        end
+    end
+
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, left=0.0, right=10.0,
+                                       fit_intercept=false,
+                                       coefficient_bounds=((-5.0, 5.0), (0.1, 10.0)))
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+
+    @test haskey(fitter.coefficients, :A)
+    @test haskey(fitter.coefficients, :B)
+
+    # Both intercepts should be zero
+    a_A, b_A = fitter.coefficients[:A]
+    a_B, b_B = fitter.coefficients[:B]
+    @test a_A == 0.0
+    @test a_B == 0.0
+
+    # Group A should have a larger scale than Group B
+    @test b_A > b_B
+
+    # Both should produce finite predictions
+    @test isfinite(fitter(5.0, :A))
+    @test isfinite(fitter(5.0, :B))
+
+    # Group A predictions should be larger at positive x
+    @test fitter(5.0, :A) > fitter(5.0, :B)
+end
+
+@testset "UnivariateAdjustedFitter fit_intercept=false Iterative" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(55)
+    n = 200
+    x = sort(rand(n) .* 10.0)
+    y = 2.0 .* x .+ randn(n) .* 0.1
+    groups = fill(:A, n)
+
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, weight_on_new=0.8,
+                                       left=0.0, right=10.0, fit_intercept=false,
+                                       coefficient_bounds=((-5.0, 5.0), (0.1, 10.0)))
+
+    # Multiple iterations
+    for _ in 1:3
+        UnivariateFunctions.fit!(fitter, x, y, groups)
+    end
+    @test fitter.times_through == 3
+
+    # Intercept should remain zero after blending
+    a_A, _ = fitter.coefficients[:A]
+    @test a_A == 0.0
+
+    @test isfinite(fitter(5.0, :A))
+end
+
+@testset "UnivariateAdjustedFitter fit_intercept=false vs true Comparison" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(77)
+    n = 200
+    x = sort(rand(n) .* 10.0)
+    # Data with a clear intercept: y = 5.0 + 2.0*x
+    y = 5.0 .+ 2.0 .* x .+ randn(n) .* 0.1
+    groups = fill(:A, n)
+
+    # With intercept
+    fitter_with = UnivariateAdjustedFitter(:increasing; nbins=15, left=0.0, right=10.0,
+                                            fit_intercept=true,
+                                            coefficient_bounds=((-10.0, 10.0), (0.1, 10.0)))
+    UnivariateFunctions.fit!(fitter_with, x, y, groups)
+
+    # Without intercept
+    fitter_without = UnivariateAdjustedFitter(:increasing; nbins=15, left=0.0, right=10.0,
+                                               fit_intercept=false,
+                                               coefficient_bounds=((-10.0, 10.0), (0.1, 10.0)))
+    UnivariateFunctions.fit!(fitter_without, x, y, groups)
+
+    # fit_intercept=true should have a nonzero intercept estimate
+    a_with, _ = fitter_with.coefficients[:A]
+    a_without, _ = fitter_without.coefficients[:A]
+    @test a_without == 0.0
+    # The with-intercept version should have a better fit at x=0 (closer to 5.0)
+    @test abs(fitter_with(0.0, :A) - 5.0) < abs(fitter_without(0.0, :A) - 5.0)
+end
+
+@testset "UnivariateAdjustedFitter fit_intercept=false Bounds Clamping" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(88)
+    n = 100
+    x = sort(rand(n) .* 10.0)
+    # Very large scale — b should get clamped
+    y = 100.0 .* x .+ randn(n) .* 0.1
+    groups = fill(:A, n)
+
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, left=0.0, right=10.0,
+                                       fit_intercept=false,
+                                       coefficient_bounds=((-2.0, 2.0), (0.5, 3.0)))
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+
+    a_A, b_A = fitter.coefficients[:A]
+    @test a_A == 0.0
+    @test b_A >= 0.5
+    @test b_A <= 3.0
 end

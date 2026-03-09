@@ -279,6 +279,9 @@ A mutable struct for iteratively fitting univariate functions with group-specifi
 affine adjustments. It fits a shared shape function `f(x)` and per-group coefficients
 `(a_g, b_g)` so that `y_g ≈ a_g + b_g * f(x)`.
 
+When `fit_intercept` is `false`, the intercept is forced to zero so that
+`y_g ≈ b_g * f(x)` (scale-only adjustment).
+
 Each call to `fit!` fits new data and optionally blends with the previous fit via
 `weight_on_new`. After fitting the shape, per-group coefficients are re-estimated
 via OLS and clamped to `coefficient_bounds`. Periodic simplification reduces the
@@ -297,6 +300,7 @@ complexity of the accumulated `Piecewise_Function`.
 * `right_` - Right boundary for simplification domain.
 * `min_bins_for_simplification_` - Number of sample points used when simplifying.
 * `adjust_for_groups` - If `true`, undo group coefficients before fitting the shape; if `false`, fit directly on raw y values.
+* `fit_intercept` - If `true`, estimate both `a_g` and `b_g`; if `false`, force `a_g = 0` and only estimate `b_g`.
 * `coefficient_bounds` - `((a_min, a_max), (b_min, b_max))` clamping bounds for estimated coefficients.
 
 ### Constructor
@@ -304,6 +308,7 @@ complexity of the accumulated `Piecewise_Function`.
                              equally_spaced_bins=true, weight_on_new=1.0,
                              simplification_frequency=0, left=-Inf, right=Inf,
                              min_bins_for_simplification=25, adjust_for_groups=true,
+                             fit_intercept=true,
                              coefficient_bounds=((-1.0, 1.0), (0.1, 2.5)))
 
 Creates a `UnivariateAdjustedFitter` initialised with a zero function.
@@ -321,14 +326,16 @@ mutable struct UnivariateAdjustedFitter
     right_::Float64
     min_bins_for_simplification_::Int
     adjust_for_groups::Bool
+    fit_intercept::Bool
     coefficient_bounds::Tuple{Tuple{Float64,Float64},Tuple{Float64,Float64}}
 end
 
 function UnivariateAdjustedFitter(method::Symbol; coefficients::Dict=Dict(), nbins::Int=10, equally_spaced_bins::Bool=true,
                                   weight_on_new::Float64=1.0, simplification_frequency::Int=0,
-                                  left::Real=-Inf, right::Real=Inf, min_bins_for_simplification::Int=25, adjust_for_groups::Bool=true, coefficient_bounds::Tuple{Tuple{Float64,Float64},Tuple{Float64,Float64}} = ((-1.0, 1.0), (0.1, 2.5)))
+                                  left::Real=-Inf, right::Real=Inf, min_bins_for_simplification::Int=25, adjust_for_groups::Bool=true,
+                                  fit_intercept::Bool=true, coefficient_bounds::Tuple{Tuple{Float64,Float64},Tuple{Float64,Float64}} = ((-1.0, 1.0), (0.1, 2.5)))
     return UnivariateAdjustedFitter(PE_Function(0.0, 0.0, 0.0, 0), coefficients, method, 0, simplification_frequency,
-                                    nbins, equally_spaced_bins, weight_on_new, Float64(left), Float64(right), min_bins_for_simplification, adjust_for_groups, coefficient_bounds)
+                                    nbins, equally_spaced_bins, weight_on_new, Float64(left), Float64(right), min_bins_for_simplification, adjust_for_groups, fit_intercept, coefficient_bounds)
 end
 
 function fit_shape(x_new::Vector{<:Real}, y_new::Vector{<:Real}, fitter::Union{UnivariateFitter,UnivariateAdjustedFitter})
@@ -371,6 +378,8 @@ Fit the `UnivariateAdjustedFitter` to new data `x_new`, `y_new`, `groups`.
 2. Fit the shared shape function to the (adjusted) data.
 3. Blend with the previous fit according to `weight_on_new`.
 4. Re-estimate per-group coefficients `(a_g, b_g)` via OLS, clamped to `coefficient_bounds`.
+   When `fit_intercept` is `false`, `a_g` is forced to `0.0` and only `b_g` is estimated
+   via no-intercept OLS: `b_g = Σ(f_i * y_i) / Σ(f_i²)`.
 5. Periodically simplify the accumulated function.
 """
 function fit!(fitter::UnivariateAdjustedFitter, x_new::Vector{<:Real}, y_new::Vector{<:Real}, groups::Vector)
@@ -393,7 +402,7 @@ function fit!(fitter::UnivariateAdjustedFitter, x_new::Vector{<:Real}, y_new::Ve
         newfun = UnivariateFunctions.simplify(newfun, fitter.min_bins_for_simplification_, fitter.left_, fitter.right_)
     end
     fitter.fun = newfun
-    # Re-estimate per-group coefficients via OLS: y_g = a_g + b_g * f(x_g).
+    # Re-estimate per-group coefficients.
     (a_min, a_max) = fitter.coefficient_bounds[1]
     (b_min, b_max) = fitter.coefficient_bounds[2]
     blend_weight = fitter.times_through > 0 ? min(1 / (fitter.times_through + 1), fitter.weight_on_new) : 1.0
@@ -405,17 +414,28 @@ function fit!(fitter::UnivariateAdjustedFitter, x_new::Vector{<:Real}, y_new::Ve
         if n_g < 2
             continue
         end
-        mean_f = sum(f_vals) / n_g
-        mean_y = sum(y_g) / n_g
-        var_f = sum((f_vals .- mean_f).^2) / n_g
-        if var_f < tol
-            # f is essentially constant for this group — can only estimate intercept.
-            new_a = mean_y
-            new_b = 1.0
+        if fitter.fit_intercept
+            # OLS with intercept: y = a + b*f
+            mean_f = sum(f_vals) / n_g
+            mean_y = sum(y_g) / n_g
+            var_f = sum((f_vals .- mean_f).^2) / n_g
+            if var_f < tol
+                new_a = mean_y
+                new_b = 1.0
+            else
+                cov_fy = sum((f_vals .- mean_f) .* (y_g .- mean_y)) / n_g
+                new_b = cov_fy / var_f
+                new_a = mean_y - new_b * mean_f
+            end
         else
-            cov_fy = sum((f_vals .- mean_f) .* (y_g .- mean_y)) / n_g
-            new_b = cov_fy / var_f
-            new_a = mean_y - new_b * mean_f
+            # No-intercept OLS: y = b*f  →  b = Σ(f*y) / Σ(f²)
+            sum_f2 = sum(f_vals .* f_vals)
+            if sum_f2 < tol
+                new_b = 1.0
+            else
+                new_b = sum(f_vals .* y_g) / sum_f2
+            end
+            new_a = 0.0
         end
         # Clamp to bounds.
         new_a = clamp(new_a, a_min, a_max)

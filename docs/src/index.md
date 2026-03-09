@@ -43,7 +43,7 @@ See the [Regression and Smoothing](Regression.md) page for detailed documentatio
 The package provides two mutable structs for iteratively fitting shape-constrained functions to streaming or batched data:
 
 * `UnivariateFitter` - Fits a single shape-constrained function, blending new fits with the previous result over successive calls to `fit!`. Supports periodic simplification to control complexity.
-* `UnivariateAdjustedFitter` - Extends `UnivariateFitter` to multiple groups. It fits a shared shape function `f(x)` while estimating per-group affine coefficients `(a_g, b_g)` so that `y_g ≈ a_g + b_g * f(x)`. Coefficients are estimated via OLS and clamped to configurable bounds.
+* `UnivariateAdjustedFitter` - Extends `UnivariateFitter` to multiple groups. It fits a shared shape function `f(x)` while estimating per-group affine coefficients `(a_g, b_g)` so that `y_g ≈ a_g + b_g * f(x)`. Coefficients are estimated via OLS and clamped to configurable bounds. Set `fit_intercept=false` to force `a_g = 0` and only estimate a scaling factor `b_g`.
 
 Both support all shape-constrained methods: `:increasing`, `:decreasing`, `:convex`, `:concave`, `:quasiconvex`, `:quasiconcave`, and `:supersmoother`.
 
