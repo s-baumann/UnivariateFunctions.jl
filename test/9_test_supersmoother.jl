@@ -75,5 +75,31 @@ using Test
     ss_small = supersmoother(x_small, y_small)
     @test ss_small isa Piecewise_Function
 
+    # ========== Weighted SuperSmoother ==========
+
+    # Equal weights should match unweighted
+    ss_unweighted = supersmoother(x, y)
+    ss_equal_w = supersmoother(x, y; weights=ones(obs))
+    @test abs(ss_unweighted(1.0) - ss_equal_w(1.0)) < 1e-8
+    @test abs(ss_unweighted(3.0) - ss_equal_w(3.0)) < 1e-8
+
+    # Non-uniform weights should produce a valid result
+    twister_w = MersenneTwister(99)
+    w_ss = rand(twister_w, obs) .+ 0.1
+    ss_weighted = supersmoother(x, y; weights=w_ss)
+    @test ss_weighted isa Piecewise_Function
+
+    # Smoothed values should still be reasonable for sinusoidal data
+    @test abs(ss_weighted(π) - sin(π)) < 1.0
+
+    # DataFrame interface with weights
+    dd_w = DataFrame(x = x, y = y)
+    ss_df_w = supersmoother(dd_w, :x, :y; weights=w_ss)
+    @test ss_df_w isa Piecewise_Function
+
+    # Weights combined with bass parameter
+    ss_weighted_bass = supersmoother(x, y; weights=w_ss, bass=3.0)
+    @test ss_weighted_bass isa Piecewise_Function
+
     println("SuperSmoother tests passed.")
 end

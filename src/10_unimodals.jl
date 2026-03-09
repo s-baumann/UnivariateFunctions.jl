@@ -11,12 +11,14 @@ function _kfold_indices(n::Int, nfolds::Int; seed::Union{Int,Nothing}=nothing)
 end
 
 """
-    _cv_error(x, y, fold_indices, fit_func; kwargs...)
+    _cv_error(x, y, fold_indices, fit_func; weights=missing, kwargs...)
 
 Compute total cross-validation SSE for a given fitting function.
+When `weights` is provided, train weights are passed to `fit_func` and
+test-fold SSE is weighted by the test observation weights.
 """
 function _cv_error(x::Vector{R}, y::Vector{R}, fold_indices::Vector{Int},
-                   fit_func::Function; kwargs...) where R<:Real
+                   fit_func::Function; weights::Union{Missing,Vector{<:Real}} = missing, kwargs...) where R<:Real
     nfolds = maximum(fold_indices)
     total_sse = 0.0
 
@@ -35,18 +37,26 @@ function _cv_error(x::Vector{R}, y::Vector{R}, fold_indices::Vector{Int},
         end
 
         # Fit on training data
-        fitted = fit_func(x_train, y_train; kwargs...)
+        if ismissing(weights)
+            fitted = fit_func(x_train, y_train; kwargs...)
+        else
+            fitted = fit_func(x_train, y_train; weights=weights[train_mask], kwargs...)
+        end
 
         # Evaluate on test data
         ŷ_test = fitted.(x_test)
-        total_sse += sum((y_test .- ŷ_test).^2)
+        if ismissing(weights)
+            total_sse += sum((y_test .- ŷ_test).^2)
+        else
+            total_sse += sum(weights[test_mask] .* (y_test .- ŷ_test).^2)
+        end
     end
 
     return total_sse
 end
 
 """
-    unimodal_regression(x, y; nbins=10, equally_spaced_bins=true, convex=false, quasi=true)
+    unimodal_regression(x, y; nbins=10, equally_spaced_bins=true, convex=false, quasi=true, weights=missing)
 
 Fit a unimodal regression function to the data.
 
@@ -57,6 +67,7 @@ Fit a unimodal regression function to the data.
 - `equally_spaced_bins`: If true, bins are equally spaced; if false, based on observation quantiles
 - `convex`: If false, fits concave/quasiconcave (single maximum); if true, fits convex/quasiconvex (single minimum)
 - `quasi`: If true, only enforces unimodality (slopes change sign once); if false, also enforces curvature
+- `weights`: Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights)
 
 # Shape constraints:
 - `convex=false, quasi=true`:  Quasiconcave - slopes go from + to - (single peak)
@@ -70,11 +81,13 @@ function unimodal_regression(x::Vector{R}, y::Vector{R};
                               nbins::Integer = 10,
                               equally_spaced_bins::Bool = true,
                               convex::Bool = false,
-                              quasi::Bool = true) where R<:Real
+                              quasi::Bool = true,
+                              weights::Union{Missing,Vector{<:Real}} = missing) where R<:Real
     idx = sortperm(x)
     x = x[idx]
     y = y[idx]
     n = length(x)
+    w_sorted = ismissing(weights) ? missing : Float64.(weights[idx])
 
     # For convex (single minimum), we flip y, fit quasiconcave, then flip back
     if convex
@@ -91,7 +104,9 @@ function unimodal_regression(x::Vector{R}, y::Vector{R};
     if quasi
         # Quasiconcave: Find optimal peak location, fit increasing then decreasing
         best_sse = Inf
-        best_result = nothing
+        best_ĝ = nothing
+        best_peak_bin = 1
+        sw = ismissing(w_sorted) ? missing : sqrt.(w_sorted)
 
         # Try each possible peak location (bin boundary)
         for peak_bin in 1:m
@@ -123,20 +138,29 @@ function unimodal_regression(x::Vector{R}, y::Vector{R};
                 end
             end
 
-            # Solve nonnegative least squares
-            ĝ = NonNegLeastSquares.nonneg_lsq(A, y)
+            # Solve nonnegative least squares (apply WLS if weights provided)
+            if ismissing(sw)
+                ĝ = NonNegLeastSquares.nonneg_lsq(A, y)
+            else
+                ĝ = NonNegLeastSquares.nonneg_lsq(sw .* A, sw .* y)
+            end
             ŷ = A * ĝ
-            sse = sum((y .- ŷ).^2)
+            sse = if ismissing(w_sorted)
+                sum((y .- ŷ).^2)
+            else
+                sum(w_sorted .* (y .- ŷ).^2)
+            end
 
             if sse < best_sse
                 best_sse = sse
-                best_result = (ĝ = ĝ, peak_bin = peak_bin, edges = edges, Δ = Δ)
+                best_ĝ = ĝ
+                best_peak_bin = peak_bin
             end
         end
 
         # Build piecewise function from best result
-        ĝ = best_result.ĝ
-        peak_bin = best_result.peak_bin
+        ĝ = best_ĝ
+        peak_bin = best_peak_bin
 
         â = ĝ[1] - ĝ[2]  # intercept
 
@@ -204,7 +228,12 @@ function unimodal_regression(x::Vector{R}, y::Vector{R};
             end
         end
 
-        ĝ = NonNegLeastSquares.nonneg_lsq(A, y)
+        if ismissing(w_sorted)
+            ĝ = NonNegLeastSquares.nonneg_lsq(A, y)
+        else
+            sw = sqrt.(w_sorted)
+            ĝ = NonNegLeastSquares.nonneg_lsq(sw .* A, sw .* y)
+        end
 
         â = ĝ[1] - ĝ[2]
         s = ĝ[3] - ĝ[4]
@@ -271,7 +300,7 @@ end
 (r::CVRegressionResult)(x) = r.fitted(x)
 
 """
-    cv_monotonic_regression(x, y; nbins=10, equally_spaced_bins=true, nfolds=10, seed=nothing)
+    cv_monotonic_regression(x, y; nbins=10, equally_spaced_bins=true, nfolds=10, seed=nothing, weights=missing)
 
 Fit monotonic regression, automatically selecting increasing vs decreasing
 based on k-fold cross-validation error.
@@ -281,12 +310,17 @@ Returns a `CVRegressionResult` containing:
 - `selected_shape`: Either `:increasing` or `:decreasing`
 - `cv_errors`: Dict mapping each shape to its CV error
 - `nfolds`: Number of folds used
+
+# Arguments
+- `weights`: Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights).
+  Train-fold weights are passed to the underlying regression; test-fold SSE is weighted.
 """
 function cv_monotonic_regression(x::Vector{R}, y::Vector{R};
                                   nbins::Integer = 10,
                                   equally_spaced_bins::Bool = true,
                                   nfolds::Integer = 10,
-                                  seed::Union{Int,Nothing} = nothing) where R<:Real
+                                  seed::Union{Int,Nothing} = nothing,
+                                  weights::Union{Missing,Vector{<:Real}} = missing) where R<:Real
 
     fold_indices = _kfold_indices(length(x), nfolds; seed=seed)
 
@@ -301,6 +335,7 @@ function cv_monotonic_regression(x::Vector{R}, y::Vector{R};
 
     for candidate in candidates
         cv_err = _cv_error(x, y, fold_indices, monotonic_regression;
+                           weights=weights,
                            nbins=nbins,
                            equally_spaced_bins=equally_spaced_bins,
                            increasing=candidate.increasing)
@@ -317,7 +352,8 @@ function cv_monotonic_regression(x::Vector{R}, y::Vector{R};
     fitted = monotonic_regression(x, y;
                                    nbins=nbins,
                                    equally_spaced_bins=equally_spaced_bins,
-                                   increasing=best_candidate.increasing)
+                                   increasing=best_candidate.increasing,
+                                   weights=weights)
 
     return CVRegressionResult(fitted, best_candidate.key, cv_errors, nfolds)
 end
@@ -327,7 +363,7 @@ function cv_monotonic_regression(dd::DataFrame, xvar::Symbol, yvar::Symbol; kwar
 end
 
 """
-    cv_unimodal_regression(x, y; nbins=10, equally_spaced_bins=true, nfolds=10, seed=nothing)
+    cv_unimodal_regression(x, y; nbins=10, equally_spaced_bins=true, nfolds=10, seed=nothing, weights=missing)
 
 Fit unimodal regression, automatically selecting among:
 - `:quasiconcave` (convex=false, quasi=true)
@@ -342,12 +378,17 @@ Returns a `CVRegressionResult` containing:
 - `selected_shape`: One of the four shape symbols
 - `cv_errors`: Dict mapping each shape to its CV error
 - `nfolds`: Number of folds used
+
+# Arguments
+- `weights`: Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights).
+  Train-fold weights are passed to the underlying regression; test-fold SSE is weighted.
 """
 function cv_unimodal_regression(x::Vector{R}, y::Vector{R};
                                  nbins::Integer = 10,
                                  equally_spaced_bins::Bool = true,
                                  nfolds::Integer = 10,
-                                 seed::Union{Int,Nothing} = nothing) where R<:Real
+                                 seed::Union{Int,Nothing} = nothing,
+                                 weights::Union{Missing,Vector{<:Real}} = missing) where R<:Real
 
     fold_indices = _kfold_indices(length(x), nfolds; seed=seed)
 
@@ -364,6 +405,7 @@ function cv_unimodal_regression(x::Vector{R}, y::Vector{R};
 
     for candidate in candidates
         cv_err = _cv_error(x, y, fold_indices, unimodal_regression;
+                           weights=weights,
                            nbins=nbins,
                            equally_spaced_bins=equally_spaced_bins,
                            convex=candidate.convex,
@@ -382,7 +424,8 @@ function cv_unimodal_regression(x::Vector{R}, y::Vector{R};
                                   nbins=nbins,
                                   equally_spaced_bins=equally_spaced_bins,
                                   convex=best_candidate.convex,
-                                  quasi=best_candidate.quasi)
+                                  quasi=best_candidate.quasi,
+                                  weights=weights)
 
     return CVRegressionResult(fitted, best_candidate.key, cv_errors, nfolds)
 end
@@ -392,7 +435,7 @@ function cv_unimodal_regression(dd::DataFrame, xvar::Symbol, yvar::Symbol; kwarg
 end
 
 """
-    cv_shape_regression(x, y; shapes=:all, nbins=10, equally_spaced_bins=true, nfolds=10, seed=nothing)
+    cv_shape_regression(x, y; shapes=:all, nbins=10, equally_spaced_bins=true, nfolds=10, seed=nothing, weights=missing)
 
 Fit regression with automatic shape selection via cross-validation.
 
@@ -405,13 +448,18 @@ Fit regression with automatic shape selection via cross-validation.
 Available shapes: `:increasing`, `:decreasing`, `:quasiconcave`, `:quasiconvex`, `:concave`, `:convex`
 
 Returns a `CVRegressionResult` with the fitted function and selection metadata.
+
+# Arguments
+- `weights`: Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights).
+  Train-fold weights are passed to the underlying regression; test-fold SSE is weighted.
 """
 function cv_shape_regression(x::Vector{R}, y::Vector{R};
                               shapes::Union{Symbol, Vector{Symbol}} = :all,
                               nbins::Integer = 10,
                               equally_spaced_bins::Bool = true,
                               nfolds::Integer = 10,
-                              seed::Union{Int,Nothing} = nothing) where R<:Real
+                              seed::Union{Int,Nothing} = nothing,
+                              weights::Union{Missing,Vector{<:Real}} = missing) where R<:Real
 
     all_candidates = Dict(
         :increasing   => (func = monotonic_regression, kwargs = (increasing = true,)),
@@ -442,6 +490,7 @@ function cv_shape_regression(x::Vector{R}, y::Vector{R};
     for key in candidate_keys
         candidate = all_candidates[key]
         cv_err = _cv_error(x, y, fold_indices, candidate.func;
+                           weights=weights,
                            nbins=nbins,
                            equally_spaced_bins=equally_spaced_bins,
                            candidate.kwargs...)
@@ -459,6 +508,7 @@ function cv_shape_regression(x::Vector{R}, y::Vector{R};
     fitted = best.func(x, y;
                         nbins=nbins,
                         equally_spaced_bins=equally_spaced_bins,
+                        weights=weights,
                         best.kwargs...)
 
     return CVRegressionResult(fitted, best_key, cv_errors, nfolds)

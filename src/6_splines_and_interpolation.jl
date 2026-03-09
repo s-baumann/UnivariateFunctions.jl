@@ -251,14 +251,16 @@ function (fitter::UnivariateFitter)(x::Real)
 end
 
 """
-    fit!(fitter::UnivariateFitter, x_new, y_new)
+    fit!(fitter::UnivariateFitter, x_new, y_new; weights=missing)
 
 Fit the `UnivariateFitter` to new data `x_new`, `y_new`. The fitted function is blended
 with the previous fit according to `fitter.weight_on_new`. If `simplification_frequency > 0`
 and the current iteration is a multiple, the function is simplified via resampling.
+
+Optional `weights` are passed to the underlying regression function.
 """
-function fit!(fitter::UnivariateFitter, x_new::Vector{<:Real}, y_new::Vector{<:Real})
-    newfun = fit_shape(x_new, y_new, fitter)
+function fit!(fitter::UnivariateFitter, x_new::Vector{<:Real}, y_new::Vector{<:Real}; weights::Union{Missing,Vector{<:Real}} = missing)
+    newfun = fit_shape(x_new, y_new, fitter; weights=weights)
     if fitter.times_through > 0
         new_weight = min( 1 / (fitter.times_through+1), fitter.weight_on_new)
         newfun = (new_weight * newfun) + ((1.0 - new_weight) * fitter.fun)
@@ -338,22 +340,22 @@ function UnivariateAdjustedFitter(method::Symbol; coefficients::Dict=Dict(), nbi
                                     nbins, equally_spaced_bins, weight_on_new, Float64(left), Float64(right), min_bins_for_simplification, adjust_for_groups, fit_intercept, coefficient_bounds)
 end
 
-function fit_shape(x_new::Vector{<:Real}, y_new::Vector{<:Real}, fitter::Union{UnivariateFitter,UnivariateAdjustedFitter})
+function fit_shape(x_new::Vector{<:Real}, y_new::Vector{<:Real}, fitter::Union{UnivariateFitter,UnivariateAdjustedFitter}; weights::Union{Missing,Vector{<:Real}} = missing)
     newfun = begin
         if fitter.method == :increasing
-            UnivariateFunctions.monotonic_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, increasing=true)
+            UnivariateFunctions.monotonic_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, increasing=true, weights=weights)
         elseif fitter.method == :decreasing
-            UnivariateFunctions.monotonic_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, increasing=false)
+            UnivariateFunctions.monotonic_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, increasing=false, weights=weights)
         elseif fitter.method == :convex
-            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=true, quasi=false)
+            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=true, quasi=false, weights=weights)
         elseif fitter.method == :concave
-            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=false, quasi=false)
+            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=false, quasi=false, weights=weights)
         elseif fitter.method == :quasiconvex
-            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=true, quasi=true)
+            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=true, quasi=true, weights=weights)
         elseif fitter.method == :quasiconcave
-            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=false, quasi=true)
+            UnivariateFunctions.unimodal_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, convex=false, quasi=true, weights=weights)
         elseif fitter.method == :supersmoother
-            UnivariateFunctions.supersmoother(x_new, y_new)
+            UnivariateFunctions.supersmoother(x_new, y_new; weights=weights)
         else
             error("Unknown maximal correlation method: $(fitter.method)")
         end
@@ -370,7 +372,7 @@ function (fitter::UnivariateAdjustedFitter)(x::Real, group)
 end
 
 """
-    fit!(fitter::UnivariateAdjustedFitter, x_new, y_new, groups)
+    fit!(fitter::UnivariateAdjustedFitter, x_new, y_new, groups; weights=missing)
 
 Fit the `UnivariateAdjustedFitter` to new data `x_new`, `y_new`, `groups`.
 
@@ -381,8 +383,11 @@ Fit the `UnivariateAdjustedFitter` to new data `x_new`, `y_new`, `groups`.
    When `fit_intercept` is `false`, `a_g` is forced to `0.0` and only `b_g` is estimated
    via no-intercept OLS: `b_g = Σ(f_i * y_i) / Σ(f_i²)`.
 5. Periodically simplify the accumulated function.
+
+Optional `weights` are passed to the underlying regression function and used in the
+per-group OLS coefficient estimation.
 """
-function fit!(fitter::UnivariateAdjustedFitter, x_new::Vector{<:Real}, y_new::Vector{<:Real}, groups::Vector)
+function fit!(fitter::UnivariateAdjustedFitter, x_new::Vector{<:Real}, y_new::Vector{<:Real}, groups::Vector; weights::Union{Missing,Vector{<:Real}} = missing)
     # Onboarding new groups.
     new_groups = setdiff(unique(groups), keys(fitter.coefficients))
     for g in new_groups
@@ -391,7 +396,7 @@ function fit!(fitter::UnivariateAdjustedFitter, x_new::Vector{<:Real}, y_new::Ve
     # Undo group coefficients to get y into the shared function's space.
     y_adjusted = fitter.adjust_for_groups ? [(y_new[i] - fitter.coefficients[groups[i]][1]) / fitter.coefficients[groups[i]][2] for i in eachindex(y_new)] : copy(y_new)
     # Fit the shared shape.
-    newfun = fit_shape(x_new, y_adjusted, fitter)
+    newfun = fit_shape(x_new, y_adjusted, fitter; weights=weights)
     # Blend with previous fit if applicable.
     if fitter.times_through > 0
         new_weight = min(1 / (fitter.times_through + 1), fitter.weight_on_new)
@@ -414,26 +419,28 @@ function fit!(fitter::UnivariateAdjustedFitter, x_new::Vector{<:Real}, y_new::Ve
         if n_g < 2
             continue
         end
+        w_g = ismissing(weights) ? ones(n_g) : Float64.(weights[mask])
+        sum_w = sum(w_g)
         if fitter.fit_intercept
-            # OLS with intercept: y = a + b*f
-            mean_f = sum(f_vals) / n_g
-            mean_y = sum(y_g) / n_g
-            var_f = sum((f_vals .- mean_f).^2) / n_g
+            # Weighted OLS with intercept: y = a + b*f
+            mean_f = sum(w_g .* f_vals) / sum_w
+            mean_y = sum(w_g .* y_g) / sum_w
+            var_f = sum(w_g .* (f_vals .- mean_f).^2) / sum_w
             if var_f < tol
                 new_a = mean_y
                 new_b = 1.0
             else
-                cov_fy = sum((f_vals .- mean_f) .* (y_g .- mean_y)) / n_g
+                cov_fy = sum(w_g .* (f_vals .- mean_f) .* (y_g .- mean_y)) / sum_w
                 new_b = cov_fy / var_f
                 new_a = mean_y - new_b * mean_f
             end
         else
-            # No-intercept OLS: y = b*f  →  b = Σ(f*y) / Σ(f²)
-            sum_f2 = sum(f_vals .* f_vals)
-            if sum_f2 < tol
+            # Weighted no-intercept OLS: y = b*f  →  b = Σ(w*f*y) / Σ(w*f²)
+            sum_wf2 = sum(w_g .* f_vals .* f_vals)
+            if sum_wf2 < tol
                 new_b = 1.0
             else
-                new_b = sum(f_vals .* y_g) / sum_f2
+                new_b = sum(w_g .* f_vals .* y_g) / sum_wf2
             end
             new_a = 0.0
         end

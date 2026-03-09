@@ -4,23 +4,26 @@
 Compute local linear regression smoothed values for all points.
 `span` is the fraction of data points to use in each local fit (0 < span ≤ 1).
 """
-function _local_linear_smooth(x::Vector{R}, y::Vector{R}, span::R) where R<:Real
+function _local_linear_smooth(x::Vector{R}, y::Vector{R}, span::R; obs_weights::Union{Missing,Vector{<:Real}} = missing) where R<:Real
     n = length(x)
     k = max(2, Int(ceil(span * n)))  # number of neighbors to use
     ŷ = zeros(n)
-    
+
     for i in 1:n
         # Find k nearest neighbors by x distance
         distances = abs.(x .- x[i])
         neighbor_idx = sortperm(distances)[1:k]
-        
+
         x_local = x[neighbor_idx]
         y_local = y[neighbor_idx]
-        
+
         # Tricube weights based on distance
         max_dist = maximum(abs.(x_local .- x[i])) + 1e-10
         u = abs.(x_local .- x[i]) ./ max_dist
         w = (1.0 .- u.^3).^3  # tricube kernel
+        if !ismissing(obs_weights)
+            w = w .* obs_weights[neighbor_idx]
+        end
         
         # Weighted linear regression: ŷ = a + b*x
         sum_w = sum(w)
@@ -49,24 +52,27 @@ end
 Compute leave-one-out residuals for local linear regression at given span.
 Returns |yᵢ - ŷ₋ᵢ| for each point (prediction without using point i).
 """
-function _local_linear_loo_residuals(x::Vector{R}, y::Vector{R}, span::R) where R<:Real
+function _local_linear_loo_residuals(x::Vector{R}, y::Vector{R}, span::R; obs_weights::Union{Missing,Vector{<:Real}} = missing) where R<:Real
     n = length(x)
     k = max(3, Int(ceil(span * n)))  # need at least 3 so LOO still has 2
     residuals = zeros(n)
-    
+
     for i in 1:n
         # Find k nearest neighbors, excluding self for LOO
         distances = abs.(x .- x[i])
         distances[i] = Inf  # exclude self
         neighbor_idx = sortperm(distances)[1:(k-1)]
-        
+
         x_local = x[neighbor_idx]
         y_local = y[neighbor_idx]
-        
+
         # Tricube weights
         max_dist = maximum(abs.(x_local .- x[i])) + 1e-10
         u = abs.(x_local .- x[i]) ./ max_dist
         w = (1.0 .- u.^3).^3
+        if !ismissing(obs_weights)
+            w = w .* obs_weights[neighbor_idx]
+        end
         
         # Weighted linear regression
         sum_w = sum(w)
@@ -119,17 +125,18 @@ Core SuperSmoother algorithm. Returns smoothed y values.
 - `spans`: The three candidate spans to try (fraction of data)
 - `bass`: Bass enhancement parameter (0-10). Higher values produce smoother results.
 """
-function _supersmoother_values(x::Vector{R}, y::Vector{R}; 
+function _supersmoother_values(x::Vector{R}, y::Vector{R};
                                 spans::Vector{R} = R[0.05, 0.2, 0.5],
-                                bass::R = R(0.0)) where R<:Real
+                                bass::R = R(0.0),
+                                obs_weights::Union{Missing,Vector{<:Real}} = missing) where R<:Real
     n = length(x)
     n_spans = length(spans)
-    
+
     # Step 1: Compute smoothed values at each candidate span
-    smooths = [_local_linear_smooth(x, y, s) for s in spans]
-    
+    smooths = [_local_linear_smooth(x, y, s; obs_weights=obs_weights) for s in spans]
+
     # Step 2: Compute LOO residuals at each span
-    residuals = [_local_linear_loo_residuals(x, y, s) for s in spans]
+    residuals = [_local_linear_loo_residuals(x, y, s; obs_weights=obs_weights) for s in spans]
     
     # Step 3: Smooth the residuals (to stabilize span selection)
     mid_span = spans[div(n_spans + 1, 2)]  # use middle span for smoothing
@@ -187,9 +194,10 @@ function _supersmoother_values(x::Vector{R}, y::Vector{R};
 end
 
 """
-    supersmoother(x::Vector{R}, y::Vector{R}; 
+    supersmoother(x::Vector{R}, y::Vector{R};
                   spans::Vector{R} = [0.05, 0.2, 0.5],
-                  bass::R = 0.0) where R<:Real
+                  bass::R = 0.0,
+                  weights = missing) where R<:Real
 
 Friedman's SuperSmoother (1984) - a local linear regression with adaptive bandwidth.
 
@@ -197,9 +205,10 @@ Returns a `Piecewise_Function` (linear interpolation of smoothed values).
 
 # Arguments
 - `x`: Independent variable values
-- `y`: Dependent variable values  
+- `y`: Dependent variable values
 - `spans`: Candidate spans to consider (fraction of data points). Default `[0.05, 0.2, 0.5]`
 - `bass`: Bass enhancement (0-10). Higher values favor smoother fits. Default `0.0`
+- `weights`: Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights)
 
 # Example
 ```julia
@@ -208,16 +217,18 @@ f(2.5)  # evaluate at new point
 derivative(f)  # get derivative function
 ```
 """
-function supersmoother(x::Vector{R}, y::Vector{R}; 
+function supersmoother(x::Vector{R}, y::Vector{R};
                         spans::Vector{R} = R[0.05, 0.2, 0.5],
-                        bass::R = R(0.0)) where R<:Real
+                        bass::R = R(0.0),
+                        weights::Union{Missing,Vector{<:Real}} = missing) where R<:Real
     # Sort by x
     idx = sortperm(x)
     x_sorted = x[idx]
     y_sorted = y[idx]
-    
+    w_sorted = ismissing(weights) ? missing : Float64.(weights[idx])
+
     # Get smoothed values
-    ŷ = _supersmoother_values(x_sorted, y_sorted; spans=spans, bass=bass)
+    ŷ = _supersmoother_values(x_sorted, y_sorted; spans=spans, bass=bass, obs_weights=w_sorted)
     
     # Return as piecewise linear interpolation
     return create_linear_interpolation(x_sorted, ŷ)

@@ -188,5 +188,95 @@ using Test
     @test cv_all(0.0) isa Real
     @test cv_all(0.0) == cv_all.fitted(0.0)
 
+    # ========== Weighted unimodal_regression ==========
+
+    twister_w = MersenneTwister(77)
+    obs_w = 200
+    x_w = collect(range(-2, 2, length=obs_w))
+    y_w_concave = -x_w.^2 .+ 4 .+ rand(twister_w, Normal(0, 0.3), obs_w)
+
+    # Equal weights should match unweighted
+    fit_unweighted = unimodal_regression(x_w, y_w_concave; quasi=true, convex=false, nbins=10)
+    fit_equal_w = unimodal_regression(x_w, y_w_concave; quasi=true, convex=false, nbins=10, weights=ones(obs_w))
+    @test abs(fit_unweighted(0.0) - fit_equal_w(0.0)) < 1e-6
+    @test abs(fit_unweighted(1.0) - fit_equal_w(1.0)) < 1e-6
+
+    # Non-uniform weights
+    w_uni = rand(twister_w, obs_w) .+ 0.1
+    fit_weighted_qc = unimodal_regression(x_w, y_w_concave; quasi=true, convex=false, weights=w_uni)
+    @test fit_weighted_qc isa Piecewise_Function
+    @test fit_weighted_qc(0.0) > fit_weighted_qc(-1.5)
+    @test fit_weighted_qc(0.0) > fit_weighted_qc(1.5)
+
+    # Quasiconvex with weights
+    y_w_convex = x_w.^2 .+ rand(twister_w, Normal(0, 0.3), obs_w)
+    fit_weighted_qv = unimodal_regression(x_w, y_w_convex; quasi=true, convex=true, weights=w_uni)
+    @test fit_weighted_qv isa Piecewise_Function
+    @test fit_weighted_qv(0.0) < fit_weighted_qv(-1.5)
+    @test fit_weighted_qv(0.0) < fit_weighted_qv(1.5)
+
+    # True concave with weights
+    fit_weighted_concave = unimodal_regression(x_w, y_w_concave; quasi=false, convex=false, weights=w_uni)
+    @test fit_weighted_concave isa Piecewise_Function
+
+    # True convex with weights
+    fit_weighted_convex = unimodal_regression(x_w, y_w_convex; quasi=false, convex=true, weights=w_uni)
+    @test fit_weighted_convex isa Piecewise_Function
+
+    # DataFrame interface with weights
+    dd_w = DataFrame(x = x_w, y = y_w_concave)
+    fit_df_w = unimodal_regression(dd_w, :x, :y; quasi=true, convex=false, weights=w_uni)
+    @test fit_df_w isa Piecewise_Function
+
+    # ========== Weighted CV functions ==========
+
+    twister_cv = MersenneTwister(55)
+    obs_cv = 150
+    x_cv = collect(range(0, 5, length=obs_cv))
+    w_cv = rand(twister_cv, obs_cv) .+ 0.1
+
+    # cv_monotonic_regression with weights
+    y_cv_inc = 2.0 .* x_cv .+ rand(twister_cv, Normal(0, 0.5), obs_cv)
+    cv_mono_w = cv_monotonic_regression(x_cv, y_cv_inc; nfolds=5, seed=42, weights=w_cv)
+    @test cv_mono_w isa CVRegressionResult
+    @test cv_mono_w.selected_shape == :increasing
+    @test cv_mono_w.fitted isa Piecewise_Function
+    @test cv_mono_w(2.5) isa Real
+
+    # Equal weights should match unweighted
+    cv_mono_uw = cv_monotonic_regression(x_cv, y_cv_inc; nfolds=5, seed=42)
+    cv_mono_ew = cv_monotonic_regression(x_cv, y_cv_inc; nfolds=5, seed=42, weights=ones(obs_cv))
+    @test cv_mono_uw.selected_shape == cv_mono_ew.selected_shape
+    @test abs(cv_mono_uw.cv_errors[:increasing] - cv_mono_ew.cv_errors[:increasing]) < 1e-6
+
+    # cv_unimodal_regression with weights
+    y_cv_peak = -x_cv.^2 .+ 12.5 .* x_cv .+ rand(twister_cv, Normal(0, 0.5), obs_cv)
+    cv_uni_w = cv_unimodal_regression(x_cv, y_cv_peak; nfolds=5, seed=42, weights=w_cv)
+    @test cv_uni_w isa CVRegressionResult
+    @test cv_uni_w.fitted isa Piecewise_Function
+    @test cv_uni_w(2.5) isa Real
+
+    # cv_shape_regression with weights
+    cv_shape_w = cv_shape_regression(x_cv, y_cv_inc; shapes=:all, nfolds=5, seed=42, weights=w_cv)
+    @test cv_shape_w isa CVRegressionResult
+    @test length(cv_shape_w.cv_errors) == 6
+    @test cv_shape_w.fitted isa Piecewise_Function
+
+    # cv_shape_regression with weights and subset of shapes
+    cv_shape_w2 = cv_shape_regression(x_cv, y_cv_inc; shapes=[:increasing, :quasiconcave], nfolds=5, seed=42, weights=w_cv)
+    @test cv_shape_w2 isa CVRegressionResult
+    @test length(cv_shape_w2.cv_errors) == 2
+
+    # DataFrame interfaces pass weights through
+    dd_cv = DataFrame(x = x_cv, y = y_cv_inc)
+    cv_mono_df_w = cv_monotonic_regression(dd_cv, :x, :y; nfolds=5, seed=42, weights=w_cv)
+    @test cv_mono_df_w isa CVRegressionResult
+
+    cv_uni_df_w = cv_unimodal_regression(dd_cv, :x, :y; nfolds=5, seed=42, weights=w_cv)
+    @test cv_uni_df_w isa CVRegressionResult
+
+    cv_shape_df_w = cv_shape_regression(dd_cv, :x, :y; nfolds=5, seed=42, weights=w_cv)
+    @test cv_shape_df_w isa CVRegressionResult
+
     println("Unimodal regression tests passed.")
 end

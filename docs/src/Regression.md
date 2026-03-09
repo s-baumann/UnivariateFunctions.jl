@@ -43,6 +43,7 @@ integ = indefinite_integral(fit)
 
 - `spans`: Vector of candidate spans (fraction of data). Default `[0.05, 0.2, 0.5]`
 - `bass`: Bass enhancement (0-10). Higher values favor smoother fits. Default `0.0`
+- `weights`: Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights)
 
 ```julia
 # More smoothing with bass enhancement
@@ -85,6 +86,9 @@ fit_quantile = monotonic_regression(x, y; nbins=15, equally_spaced_bins=false)
 - `nbins`: Number of bins for piecewise linear fit. Default `10`
 - `equally_spaced_bins`: If `true`, bins are equally spaced in x; if `false`, based on observation quantiles. Default `true`
 - `increasing`: If `true`, fit increasing function; if `false`, decreasing. Default `true`
+- `weights`: Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights)
+
+`isotonic_regression` also accepts the `weights` keyword argument.
 
 ## Unimodal Regression
 
@@ -128,10 +132,13 @@ fit_v = unimodal_regression(x, y_trough; convex=true, quasi=false)
 - `equally_spaced_bins`: If `true`, bins are equally spaced; if `false`, quantile-based. Default `true`
 - `convex`: If `false`, fit peak (concave); if `true`, fit trough (convex). Default `false`
 - `quasi`: If `true`, only enforce unimodality; if `false`, also enforce curvature. Default `true`
+- `weights`: Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights)
 
 ## Cross-Validation Model Selection
 
 When you're unsure about the shape of the relationship, use cross-validation to automatically select the best shape.
+
+All three CV functions accept an optional `weights` keyword argument. When provided, train-fold weights are passed to the underlying regression and test-fold SSE is weighted by the test observation weights.
 
 ### cv_monotonic_regression
 
@@ -255,6 +262,8 @@ end
 - `simplification_frequency`: Simplify every N fits. `0` disables. Default `0`
 - `left`, `right`: Domain bounds for simplification. Default `-Inf`, `Inf`
 
+The `fit!` function also accepts `weights` (`Vector{<:Real}` or `missing`) to pass observation weights to the underlying regression. For `UnivariateAdjustedFitter`, weights are used both for the shape fit and for the per-group coefficient estimation.
+
 ## Simplifying Piecewise Functions
 
 The `simplify` function reduces the complexity of a `Piecewise_Function` by evaluating it at evenly spaced points and re-interpolating:
@@ -269,6 +278,24 @@ pw_simple = simplify(pw, 20, 0.0, 10.0, :linear)
 pw_quad = simplify(pw, 20, 0.0, 10.0, :quadratic)
 pw_const = simplify(pw, 20, 0.0, 10.0, :constant_right)
 ```
+
+## Observation Weights
+
+All regression and smoothing functions accept an optional `weights` keyword argument. When provided, observations with higher weights have more influence on the fitted function.
+
+```julia
+# Weighted monotonic regression
+w = [1.0, 1.0, 1.0, 5.0, 5.0, 5.0]  # weight later observations more
+fit = monotonic_regression(x, y; weights=w, increasing=true)
+
+# Weighted supersmoother
+fit = supersmoother(x, y; weights=w)
+
+# Weighted OLS approximation
+fit = create_ols_approximation(y, x; weights=w)
+```
+
+The `weights` argument defaults to `missing`, which is equivalent to equal weights for all observations. Weights must be a `Vector{<:Real}` with the same length as the data.
 
 ## DataFrame Interface
 

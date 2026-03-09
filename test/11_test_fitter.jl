@@ -652,3 +652,95 @@ end
     @test b_A >= 0.5
     @test b_A <= 3.0
 end
+
+@testset "UnivariateFitter Weighted fit! Tests" begin
+    using UnivariateFunctions
+    using Random, Distributions
+
+    n = 200
+    twister = MersenneTwister(88)
+    x = sort(rand(twister, n) .* 5.0)
+    y = 2.0 .* x .+ 1.0 .+ rand(twister, Normal(0, 0.3), n)
+    w = rand(twister, n) .+ 0.1
+
+    # UnivariateFitter with weights
+    fitter_w = UnivariateFitter(:increasing; nbins=10)
+    UnivariateFunctions.fit!(fitter_w, x, y; weights=w)
+    @test fitter_w.fun isa Piecewise_Function
+    @test fitter_w(4.0) > fitter_w(1.0)
+
+    # Equal weights should match unweighted
+    fitter_uw = UnivariateFitter(:increasing; nbins=10)
+    UnivariateFunctions.fit!(fitter_uw, x, y)
+    fitter_ew = UnivariateFitter(:increasing; nbins=10)
+    UnivariateFunctions.fit!(fitter_ew, x, y; weights=ones(n))
+    @test abs(fitter_uw(2.5) - fitter_ew(2.5)) < 1e-6
+
+    # Iterative fitting with weights
+    fitter_iter = UnivariateFitter(:increasing; nbins=10, weight_on_new=0.7)
+    UnivariateFunctions.fit!(fitter_iter, x, y; weights=w)
+    UnivariateFunctions.fit!(fitter_iter, x, y; weights=w)
+    @test fitter_iter.times_through == 2
+    @test fitter_iter(3.0) isa Real
+
+    # Supersmoother with weights
+    fitter_ss = UnivariateFitter(:supersmoother)
+    UnivariateFunctions.fit!(fitter_ss, x, y; weights=w)
+    @test fitter_ss.fun isa Piecewise_Function
+
+    # Quasiconcave with weights
+    y_peak = -(x .- 2.5).^2 .+ 6.0 .+ rand(twister, Normal(0, 0.3), n)
+    fitter_qc = UnivariateFitter(:quasiconcave; nbins=10)
+    UnivariateFunctions.fit!(fitter_qc, x, y_peak; weights=w)
+    @test fitter_qc.fun isa Piecewise_Function
+end
+
+@testset "UnivariateAdjustedFitter Weighted fit! Tests" begin
+    using UnivariateFunctions
+    using Random, Distributions
+
+    n = 200
+    twister = MersenneTwister(99)
+    x = sort(rand(twister, n) .* 5.0)
+    groups = repeat([:A, :B], n ÷ 2)
+    y = [g == :A ? 1.0 + 1.5 * xi : 0.5 + 0.8 * xi for (xi, g) in zip(x, groups)]
+    y .+= rand(twister, Normal(0, 0.2), n)
+    w = rand(twister, n) .+ 0.1
+
+    # Basic weighted fit
+    fitter_w = UnivariateAdjustedFitter(:increasing; nbins=10, left=0.0, right=5.0,
+                                         coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+    UnivariateFunctions.fit!(fitter_w, x, y, groups; weights=w)
+    @test fitter_w.fun isa Piecewise_Function
+    @test fitter_w.times_through == 1
+    @test haskey(fitter_w.coefficients, :A)
+    @test haskey(fitter_w.coefficients, :B)
+
+    # Equal weights should match unweighted
+    fitter_uw = UnivariateAdjustedFitter(:increasing; nbins=10, left=0.0, right=5.0,
+                                          coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+    UnivariateFunctions.fit!(fitter_uw, x, y, groups)
+    fitter_ew = UnivariateAdjustedFitter(:increasing; nbins=10, left=0.0, right=5.0,
+                                          coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+    UnivariateFunctions.fit!(fitter_ew, x, y, groups; weights=ones(n))
+    @test abs(fitter_uw(2.5, :A) - fitter_ew(2.5, :A)) < 1e-6
+    @test abs(fitter_uw(2.5, :B) - fitter_ew(2.5, :B)) < 1e-6
+    @test abs(fitter_uw.coefficients[:A][1] - fitter_ew.coefficients[:A][1]) < 1e-6
+    @test abs(fitter_uw.coefficients[:A][2] - fitter_ew.coefficients[:A][2]) < 1e-6
+
+    # Iterative weighted fitting
+    fitter_iter = UnivariateAdjustedFitter(:increasing; nbins=10, weight_on_new=0.7,
+                                            left=0.0, right=5.0,
+                                            coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+    UnivariateFunctions.fit!(fitter_iter, x, y, groups; weights=w)
+    UnivariateFunctions.fit!(fitter_iter, x, y, groups; weights=w)
+    @test fitter_iter.times_through == 2
+
+    # fit_intercept=false with weights
+    fitter_noint = UnivariateAdjustedFitter(:increasing; nbins=10, left=0.0, right=5.0,
+                                             fit_intercept=false,
+                                             coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+    UnivariateFunctions.fit!(fitter_noint, x, y, groups; weights=w)
+    @test fitter_noint.coefficients[:A][1] == 0.0
+    @test fitter_noint.coefficients[:B][1] == 0.0
+end

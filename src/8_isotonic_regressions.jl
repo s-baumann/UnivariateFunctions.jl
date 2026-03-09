@@ -1,5 +1,5 @@
 """
-    isotonic_regression(x, y; increasing=true)
+    isotonic_regression(x, y; increasing=true, weights=missing)
 
 Fit an isotonic (monotonic step function) regression using the Pool Adjacent Violators (PAV) algorithm.
 
@@ -7,6 +7,7 @@ Fit an isotonic (monotonic step function) regression using the Pool Adjacent Vio
 - `x`: Independent variable values
 - `y`: Dependent variable values
 - `increasing`: If `true`, fit monotonically increasing function; if `false`, decreasing. Default `true`
+- `weights`: Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights)
 
 Returns a `Piecewise_Function` representing the isotonic fit.
 
@@ -18,7 +19,7 @@ fit = isotonic_regression(x, y; increasing=true)
 fit(5.5)  # evaluate at new point
 ```
 """
-function isotonic_regression(x::Vector{R}, y::Vector{R}; increasing::Bool = true) where R<:Real
+function isotonic_regression(x::Vector{R}, y::Vector{R}; increasing::Bool = true, weights::Union{Missing,Vector{<:Real}} = missing) where R<:Real
     if increasing == false
         y = -1.0 .* y
     end
@@ -26,7 +27,11 @@ function isotonic_regression(x::Vector{R}, y::Vector{R}; increasing::Bool = true
     x = x[idx]
     y = y[idx]
     n = length(x)
-    yhat = MultivariateStats.isotonic(x, y)
+    yhat = if ismissing(weights)
+        MultivariateStats.isotonic(x, y)
+    else
+        MultivariateStats.isotonic(x, y, Float64.(weights[idx]))
+    end
 
     starts_ = Vector{Float64}([-Inf])
     funcs_ = Vector{UnivariateFunction}([PE_Function(yhat[1])])
@@ -86,8 +91,8 @@ function isotonic_regression(x::Vector{R}, y::Vector{R}; increasing::Bool = true
     return aa
 end
 
-function isotonic_regression(dd::DataFrame, xvar::Symbol, yvar::Symbol; increasing::Bool = true)
-    return isotonic_regression(dd[!, xvar], dd[!, yvar]; increasing=increasing)
+function isotonic_regression(dd::DataFrame, xvar::Symbol, yvar::Symbol; increasing::Bool = true, weights::Union{Missing,Vector{<:Real}} = missing)
+    return isotonic_regression(dd[!, xvar], dd[!, yvar]; increasing=increasing, weights=weights)
 end
 
 function make_obs_grid(x::Vector{R}; nbins::Int=10) where R<:Real
@@ -106,7 +111,7 @@ end
 
 
 """
-    monotonic_regression(x, y; nbins=10, equally_spaced_bins=true, increasing=true)
+    monotonic_regression(x, y; nbins=10, equally_spaced_bins=true, increasing=true, weights=missing)
 
 Fit a piecewise linear monotonic regression using nonnegative least squares.
 
@@ -119,6 +124,7 @@ with nonnegative slopes (for increasing) or nonpositive slopes (for decreasing).
 - `nbins`: Number of bins for the piecewise linear fit. Default `10`
 - `equally_spaced_bins`: If `true`, bins are equally spaced in x; if `false`, based on observation quantiles. Default `true`
 - `increasing`: If `true`, fit monotonically increasing function; if `false`, decreasing. Default `true`
+- `weights`: Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights)
 
 Returns a `Piecewise_Function` representing the monotonic fit.
 
@@ -131,11 +137,12 @@ fit(2.5)  # evaluate at new point
 derivative(fit)  # get derivative function
 ```
 """
-function monotonic_regression(x::Vector{R}, y::Vector{R}; nbins::Integer = 10, equally_spaced_bins::Bool=true, increasing::Bool = true) where R<:Real
+function monotonic_regression(x::Vector{R}, y::Vector{R}; nbins::Integer = 10, equally_spaced_bins::Bool=true, increasing::Bool = true, weights::Union{Missing,Vector{<:Real}} = missing) where R<:Real
     idx = sortperm(x)
     x = x[idx]
     y = y[idx]
     n = length(x)
+    w_sorted = ismissing(weights) ? missing : Float64.(weights[idx])
 
     if increasing == false
         y = -1.0 .* y
@@ -165,8 +172,13 @@ function monotonic_regression(x::Vector{R}, y::Vector{R}; nbins::Integer = 10, e
     # So intercept coefficient needs to be positive. So we will do two constants one all 1 and one all -1 and it can choose.
     A = hcat(ones(n), -ones(n), A)
     
-    # Solve nonnegative least squares for slopes
-    ĝ = NonNegLeastSquares.nonneg_lsq(A, y)
+    # Solve nonnegative least squares for slopes (apply WLS if weights provided)
+    if ismissing(w_sorted)
+        ĝ = NonNegLeastSquares.nonneg_lsq(A, y)
+    else
+        sw = sqrt.(w_sorted)
+        ĝ = NonNegLeastSquares.nonneg_lsq(sw .* A, sw .* y)
+    end
 
     â = ĝ[1] - ĝ[2]  # intercept is difference of two nonnegative coefficients
 
@@ -175,7 +187,7 @@ function monotonic_regression(x::Vector{R}, y::Vector{R}; nbins::Integer = 10, e
     start_y_accum = â
     for i in 1:(length(edges)-1)
         st = i == 1 ? -Inf : edges[i]
-        gradient = ĝ[i+2,1]
+        gradient = ĝ[i+2]
         funn = PE_Function(start_y_accum) + PE_Function(gradient, 0.0, edges[i], 1)
         push!(starts_, st)
         push!(funcs_, funn)
@@ -190,8 +202,8 @@ function monotonic_regression(x::Vector{R}, y::Vector{R}; nbins::Integer = 10, e
     return aa
 end
 
-function monotonic_regression(dd::DataFrame, xvar::Symbol, yvar::Symbol; nbins::Integer = 10, equally_spaced_bins::Bool=true, increasing::Bool = true)
-    return monotonic_regression(dd[!, xvar], dd[!, yvar]; nbins=nbins, equally_spaced_bins=equally_spaced_bins, increasing=increasing)
+function monotonic_regression(dd::DataFrame, xvar::Symbol, yvar::Symbol; nbins::Integer = 10, equally_spaced_bins::Bool=true, increasing::Bool = true, weights::Union{Missing,Vector{<:Real}} = missing)
+    return monotonic_regression(dd[!, xvar], dd[!, yvar]; nbins=nbins, equally_spaced_bins=equally_spaced_bins, increasing=increasing, weights=weights)
 end
 
 

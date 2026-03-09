@@ -31,6 +31,8 @@ The package provides several shape-constrained regression methods that return `P
 * `monotonic_regression` - Fits a piecewise linear monotonic function using nonnegative least squares.
 * `unimodal_regression` - Fits functions with a single peak (quasiconcave/concave) or trough (quasiconvex/convex).
 
+All regression and smoothing functions (including `create_ols_approximation`) accept an optional `weights` keyword argument for weighted fitting. When provided, observations with higher weights have more influence on the fitted function. The default is `missing` (equal weights).
+
 Cross-validation functions are also provided for automatic shape selection:
 * `cv_monotonic_regression` - Automatically selects between increasing and decreasing.
 * `cv_unimodal_regression` - Automatically selects among the four unimodal shapes.

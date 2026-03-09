@@ -1,7 +1,7 @@
 
 """
-    create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::Real = 0.0, degree::Integer = 1, intercept::Bool = true)
-    create_ols_approximation(y::Vector{<:Real}, x::Vector{Q}, base_x::Union{Date,DateTime} = global_base_date, degree::Integer = 1, intercept::Bool = true) where Q<:Union{Date,DateTime,ZonedDateTime}
+    create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::Real = 0.0, degree::Integer = 1, intercept::Bool = true; weights=missing)
+    create_ols_approximation(y::Vector{<:Real}, x::Vector{Q}, base_x::Union{Date,DateTime} = global_base_date, degree::Integer = 1, intercept::Bool = true; weights=missing) where Q<:Union{Date,DateTime,ZonedDateTime}
 
 An approximation function calculated via OLS.
 
@@ -11,10 +11,11 @@ An approximation function calculated via OLS.
 * `base_x` - A real that offsets the x. So a coordinate with x value of 2.0 will be converted to 1.8 if base_x is 0.2.
 * `degree` - What the highest power of x should be. So if this is 3 then the equation will have x, x^2, x^3 as predictors.
 * `intercept` - Should there be an x intercept.
+* `weights` - Optional observation weights (`Vector{<:Real}` or `missing`). Default `missing` (equal weights).
 ### Returns
 * A `Sum_Of_Functions` containing the approximation function.
 """
-function create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::Real = 0.0, degree::Integer = 1, intercept::Bool = true)
+function create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::Real = 0.0, degree::Integer = 1, intercept::Bool = true; weights::Union{Missing,Vector{<:Real}} = missing)
     obs = length(y)
     if degree < 0
         error("Cannot approximate with OLS with a degree that is negative")
@@ -32,7 +33,11 @@ function create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::
         end
     end
 
-    lm1 = fit(LinearModel,  hcat(X), y)
+    lm1 = if ismissing(weights)
+        fit(LinearModel, hcat(X), y)
+    else
+        fit(LinearModel, hcat(X), y; weights=StatsBase.FrequencyWeights(Float64.(weights)))
+    end
     beta = lm1.pp.beta0
     func_array = Vector{PE_Function}(undef,convert(Int, intercept) + degree)
     if intercept
@@ -44,10 +49,10 @@ function create_ols_approximation(y::Vector{<:Real}, x::Vector{<:Real}, base_x::
     return Sum_Of_Functions(func_array)
 end
 
-function create_ols_approximation(y::Vector{<:Real}, x::Vector{Q}, base_x::WW = minimum(x), degree::Integer = 1, intercept::Bool = true) where Q<:Union{Date,DateTime,ZonedDateTime} where WW<:Union{Date,DateTime,ZonedDateTime}
+function create_ols_approximation(y::Vector{<:Real}, x::Vector{Q}, base_x::WW = minimum(x), degree::Integer = 1, intercept::Bool = true; weights::Union{Missing,Vector{<:Real}} = missing) where Q<:Union{Date,DateTime,ZonedDateTime} where WW<:Union{Date,DateTime,ZonedDateTime}
     base = years_from_global_base_date.(base_x)
     xx   = years_from_global_base_date.(x)
-    return create_ols_approximation(y, xx, base, degree, intercept)
+    return create_ols_approximation(y, xx, base, degree, intercept; weights=weights)
 end
 
 function get_chebyshev_coefficients(chebyshev::Sum_Of_Functions, y::Vector{<:Real}, unnormalised_nodes::Vector{<:Real})
