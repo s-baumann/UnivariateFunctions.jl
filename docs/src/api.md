@@ -52,6 +52,7 @@ simplify
 
 ```@docs
 UnivariateFitter
+UnivariateAdjustedFitter
 fit!
 ```
 

@@ -197,7 +197,6 @@ function simplify(f::Piecewise_Function, n_points::Integer, left::Q, right::Q, m
     return simplify(f, n_points, years_from_global_base_date(left), years_from_global_base_date(right), method)
 end
 
-
 """
     UnivariateFitter
 
@@ -244,10 +243,10 @@ function UnivariateFitter(method::Symbol; nbins::Int=10, equally_spaced_bins::Bo
                             nbins, equally_spaced_bins, weight_on_new, Float64(left), Float64(right), min_bins_for_simplification)
 end
 
-function evaluate(fitter::UnivariateFitter, x)
+function evaluate(fitter::UnivariateFitter, x::Real)
     return fitter.fun(x)
 end
-function (fitter::UnivariateFitter)(x)
+function (fitter::UnivariateFitter)(x::Real)
     return evaluate(fitter, x)
 end
 
@@ -258,7 +257,81 @@ Fit the `UnivariateFitter` to new data `x_new`, `y_new`. The fitted function is 
 with the previous fit according to `fitter.weight_on_new`. If `simplification_frequency > 0`
 and the current iteration is a multiple, the function is simplified via resampling.
 """
-function fit!(fitter::UnivariateFitter, x_new, y_new)
+function fit!(fitter::UnivariateFitter, x_new::Vector{<:Real}, y_new::Vector{<:Real})
+    newfun = fit_shape(x_new, y_new, fitter)
+    if fitter.times_through > 0
+        new_weight = min( 1 / (fitter.times_through+1), fitter.weight_on_new)
+        newfun = (new_weight * newfun) + ((1.0 - new_weight) * fitter.fun)
+    end
+    if fitter.simplification_frequency > 0 && fitter.times_through > 0 && (fitter.times_through % fitter.simplification_frequency == 0)
+        newfun = UnivariateFunctions.simplify(newfun, fitter.min_bins_for_simplification_, fitter.left_, fitter.right_)
+    end
+    fitter.fun = newfun
+    fitter.times_through += 1
+end
+
+
+
+"""
+    UnivariateAdjustedFitter
+
+A mutable struct for iteratively fitting univariate functions with group-specific
+affine adjustments. It fits a shared shape function `f(x)` and per-group coefficients
+`(a_g, b_g)` so that `y_g ≈ a_g + b_g * f(x)`.
+
+Each call to `fit!` fits new data and optionally blends with the previous fit via
+`weight_on_new`. After fitting the shape, per-group coefficients are re-estimated
+via OLS and clamped to `coefficient_bounds`. Periodic simplification reduces the
+complexity of the accumulated `Piecewise_Function`.
+
+### Fields
+* `fun` - The current fitted shared `UnivariateFunction`.
+* `coefficients` - A `Dict` mapping group keys to `(a, b)` tuples.
+* `method` - Fitting method. One of `:increasing`, `:decreasing`, `:convex`, `:concave`, `:quasiconvex`, `:quasiconcave`, `:supersmoother`.
+* `times_through` - Number of times `fit!` has been called.
+* `simplification_frequency` - Simplify the function every this many calls to `fit!`. `0` disables simplification.
+* `nbins` - Number of bins for the regression and for simplification.
+* `equally_spaced_bins` - If `true`, bins are equally spaced in x; if `false`, based on observation quantiles.
+* `weight_on_new` - Blending weight in `[0,1]`. `1.0` means only the new fit is used; lower values blend with the previous fit.
+* `left_` - Left boundary for simplification domain.
+* `right_` - Right boundary for simplification domain.
+* `min_bins_for_simplification_` - Number of sample points used when simplifying.
+* `adjust_for_groups` - If `true`, undo group coefficients before fitting the shape; if `false`, fit directly on raw y values.
+* `coefficient_bounds` - `((a_min, a_max), (b_min, b_max))` clamping bounds for estimated coefficients.
+
+### Constructor
+    UnivariateAdjustedFitter(method::Symbol; coefficients=Dict(), nbins=10,
+                             equally_spaced_bins=true, weight_on_new=1.0,
+                             simplification_frequency=0, left=-Inf, right=Inf,
+                             min_bins_for_simplification=25, adjust_for_groups=true,
+                             coefficient_bounds=((-1.0, 1.0), (0.1, 2.5)))
+
+Creates a `UnivariateAdjustedFitter` initialised with a zero function.
+"""
+mutable struct UnivariateAdjustedFitter
+    fun::UnivariateFunctions.UnivariateFunction
+    coefficients::Dict
+    method::Symbol
+    times_through::Int
+    simplification_frequency::Int
+    nbins::Int
+    equally_spaced_bins::Bool
+    weight_on_new::Float64
+    left_::Float64
+    right_::Float64
+    min_bins_for_simplification_::Int
+    adjust_for_groups::Bool
+    coefficient_bounds::Tuple{Tuple{Float64,Float64},Tuple{Float64,Float64}}
+end
+
+function UnivariateAdjustedFitter(method::Symbol; coefficients::Dict=Dict(), nbins::Int=10, equally_spaced_bins::Bool=true,
+                                  weight_on_new::Float64=1.0, simplification_frequency::Int=0,
+                                  left::Real=-Inf, right::Real=Inf, min_bins_for_simplification::Int=25, adjust_for_groups::Bool=true, coefficient_bounds::Tuple{Tuple{Float64,Float64},Tuple{Float64,Float64}} = ((-1.0, 1.0), (0.1, 2.5)))
+    return UnivariateAdjustedFitter(PE_Function(0.0, 0.0, 0.0, 0), coefficients, method, 0, simplification_frequency,
+                                    nbins, equally_spaced_bins, weight_on_new, Float64(left), Float64(right), min_bins_for_simplification, adjust_for_groups, coefficient_bounds)
+end
+
+function fit_shape(x_new::Vector{<:Real}, y_new::Vector{<:Real}, fitter::Union{UnivariateFitter,UnivariateAdjustedFitter})
     newfun = begin
         if fitter.method == :increasing
             UnivariateFunctions.monotonic_regression(x_new, y_new; nbins=fitter.nbins, equally_spaced_bins=fitter.equally_spaced_bins, increasing=true)
@@ -278,13 +351,79 @@ function fit!(fitter::UnivariateFitter, x_new, y_new)
             error("Unknown maximal correlation method: $(fitter.method)")
         end
     end
+    return newfun
+end
+
+function evaluate(fitter::UnivariateAdjustedFitter, x::Real, group)
+    coeffs = fitter.coefficients[group]
+    return coeffs[1] + coeffs[2] * fitter.fun(x)
+end
+function (fitter::UnivariateAdjustedFitter)(x::Real, group)
+    return evaluate(fitter, x, group)
+end
+
+"""
+    fit!(fitter::UnivariateAdjustedFitter, x_new, y_new, groups)
+
+Fit the `UnivariateAdjustedFitter` to new data `x_new`, `y_new`, `groups`.
+
+1. If `adjust_for_groups` is `true`, undo group coefficients to map y into the shared function's space.
+2. Fit the shared shape function to the (adjusted) data.
+3. Blend with the previous fit according to `weight_on_new`.
+4. Re-estimate per-group coefficients `(a_g, b_g)` via OLS, clamped to `coefficient_bounds`.
+5. Periodically simplify the accumulated function.
+"""
+function fit!(fitter::UnivariateAdjustedFitter, x_new::Vector{<:Real}, y_new::Vector{<:Real}, groups::Vector)
+    # Onboarding new groups.
+    new_groups = setdiff(unique(groups), keys(fitter.coefficients))
+    for g in new_groups
+        fitter.coefficients[g] = (0.0, 1.0)
+    end
+    # Undo group coefficients to get y into the shared function's space.
+    y_adjusted = fitter.adjust_for_groups ? [(y_new[i] - fitter.coefficients[groups[i]][1]) / fitter.coefficients[groups[i]][2] for i in eachindex(y_new)] : copy(y_new)
+    # Fit the shared shape.
+    newfun = fit_shape(x_new, y_adjusted, fitter)
+    # Blend with previous fit if applicable.
     if fitter.times_through > 0
-        new_weight = min( 1 / (fitter.times_through+1), fitter.weight_on_new)
+        new_weight = min(1 / (fitter.times_through + 1), fitter.weight_on_new)
         newfun = (new_weight * newfun) + ((1.0 - new_weight) * fitter.fun)
     end
+    # Simplify periodically.
     if fitter.simplification_frequency > 0 && fitter.times_through > 0 && (fitter.times_through % fitter.simplification_frequency == 0)
         newfun = UnivariateFunctions.simplify(newfun, fitter.min_bins_for_simplification_, fitter.left_, fitter.right_)
     end
     fitter.fun = newfun
+    # Re-estimate per-group coefficients via OLS: y_g = a_g + b_g * f(x_g).
+    (a_min, a_max) = fitter.coefficient_bounds[1]
+    (b_min, b_max) = fitter.coefficient_bounds[2]
+    blend_weight = fitter.times_through > 0 ? min(1 / (fitter.times_through + 1), fitter.weight_on_new) : 1.0
+    for g in unique(groups)
+        mask = groups .== g
+        f_vals = [evaluate(newfun, x_new[i]) for i in eachindex(x_new) if mask[i]]
+        y_g = y_new[mask]
+        n_g = length(y_g)
+        if n_g < 2
+            continue
+        end
+        mean_f = sum(f_vals) / n_g
+        mean_y = sum(y_g) / n_g
+        var_f = sum((f_vals .- mean_f).^2) / n_g
+        if var_f < tol
+            # f is essentially constant for this group — can only estimate intercept.
+            new_a = mean_y
+            new_b = 1.0
+        else
+            cov_fy = sum((f_vals .- mean_f) .* (y_g .- mean_y)) / n_g
+            new_b = cov_fy / var_f
+            new_a = mean_y - new_b * mean_f
+        end
+        # Clamp to bounds.
+        new_a = clamp(new_a, a_min, a_max)
+        new_b = clamp(new_b, b_min, b_max)
+        # Blend with previous coefficients.
+        old_a, old_b = fitter.coefficients[g]
+        fitter.coefficients[g] = (blend_weight * new_a + (1 - blend_weight) * old_a,
+                                  blend_weight * new_b + (1 - blend_weight) * old_b)
+    end
     fitter.times_through += 1
 end

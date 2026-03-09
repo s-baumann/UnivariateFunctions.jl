@@ -38,6 +38,15 @@ Cross-validation functions are also provided for automatic shape selection:
 
 See the [Regression and Smoothing](Regression.md) page for detailed documentation and examples.
 
+## Iterative Fitting
+
+The package provides two mutable structs for iteratively fitting shape-constrained functions to streaming or batched data:
+
+* `UnivariateFitter` - Fits a single shape-constrained function, blending new fits with the previous result over successive calls to `fit!`. Supports periodic simplification to control complexity.
+* `UnivariateAdjustedFitter` - Extends `UnivariateFitter` to multiple groups. It fits a shared shape function `f(x)` while estimating per-group affine coefficients `(a_g, b_g)` so that `y_g ≈ a_g + b_g * f(x)`. Coefficients are estimated via OLS and clamped to configurable bounds.
+
+Both support all shape-constrained methods: `:increasing`, `:decreasing`, `:convex`, `:concave`, `:quasiconvex`, `:quasiconcave`, and `:supersmoother`.
+
 ## Date Handling
 
 * All base dates are immediately converted to floats and are not otherwise saved. Thus there is no difference between a `PE_Function` created with a base as a float and one created with the matching date. This is done to simplify the code. All date conversions is done by finding the year fractions between the date and the global base date of `ZonedDateTime(1970,1,1,0,0,0,tz"UTC")`. This particular global base date should not affect anything as long as it is consistent. It is relatively trivial to change it (in the `date_conversions.jl` file) and recompile however if desired.

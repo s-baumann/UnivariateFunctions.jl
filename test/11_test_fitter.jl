@@ -200,3 +200,296 @@ end
     UnivariateFunctions.fit!(fitter, x, y)
     @test abs(fitter(5.0) - evaluate(fitter, 5.0)) < tol
 end
+
+# ====================================================================
+# UnivariateAdjustedFitter tests
+# ====================================================================
+
+@testset "UnivariateAdjustedFitter Constructor Tests" begin
+    using UnivariateFunctions
+
+    tol = 10 * eps()
+
+    # Default constructor
+    fitter = UnivariateAdjustedFitter(:increasing)
+    @test fitter.method == :increasing
+    @test fitter.times_through == 0
+    @test fitter.nbins == 10
+    @test fitter.equally_spaced_bins == true
+    @test fitter.weight_on_new == 1.0
+    @test fitter.simplification_frequency == 0
+    @test fitter.left_ == -Inf
+    @test fitter.right_ == Inf
+    @test fitter.adjust_for_groups == true
+    @test fitter.coefficient_bounds == ((-1.0, 1.0), (0.1, 2.5))
+    @test isempty(fitter.coefficients)
+    # Initial function is zero
+    @test abs(fitter.fun(0.5)) < tol
+
+    # Custom constructor
+    fitter2 = UnivariateAdjustedFitter(:decreasing; nbins=20, weight_on_new=0.5,
+                                        simplification_frequency=3, left=0.0, right=10.0,
+                                        adjust_for_groups=false,
+                                        coefficient_bounds=((-5.0, 5.0), (0.5, 3.0)))
+    @test fitter2.method == :decreasing
+    @test fitter2.nbins == 20
+    @test fitter2.weight_on_new == 0.5
+    @test fitter2.simplification_frequency == 3
+    @test fitter2.left_ == 0.0
+    @test fitter2.right_ == 10.0
+    @test fitter2.adjust_for_groups == false
+    @test fitter2.coefficient_bounds == ((-5.0, 5.0), (0.5, 3.0))
+
+    # Type stability of coefficient_bounds
+    @test fitter.coefficient_bounds isa Tuple{Tuple{Float64,Float64},Tuple{Float64,Float64}}
+end
+
+@testset "UnivariateAdjustedFitter Single Group Tests" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(99)
+    n = 200
+    x = sort(rand(n) .* 10.0)
+    y = 2.0 .* x .+ 1.0 .+ randn(n) .* 0.1
+    groups = fill(:A, n)
+
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, left=0.0, right=10.0,
+                                       coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+
+    # Basic state checks
+    @test fitter.times_through == 1
+    @test fitter.fun isa UnivariateFunction
+    @test haskey(fitter.coefficients, :A)
+
+    # Coefficients should be finite and within bounds
+    a_A, b_A = fitter.coefficients[:A]
+    @test isfinite(a_A) && isfinite(b_A)
+    @test a_A >= -5.0 && a_A <= 5.0
+    @test b_A >= 0.1 && b_A <= 5.0
+
+    # Evaluate via group should return a finite number
+    val = evaluate(fitter, 5.0, :A)
+    @test isfinite(val)
+
+    # Functor call should match evaluate
+    @test abs(fitter(5.0, :A) - evaluate(fitter, 5.0, :A)) < 1e-12
+
+    # The fitted values should roughly track the data
+    @test abs(fitter(0.0, :A) - 1.0) < 3.0
+    @test abs(fitter(10.0, :A) - 21.0) < 3.0
+end
+
+@testset "UnivariateAdjustedFitter Multi-Group Tests" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(77)
+    n = 150
+
+    # Shared shape: f(x) = x (increasing)
+    # Group A: y = 1.0 + 2.0 * x + noise
+    # Group B: y = -0.5 + 1.5 * x + noise
+    x = sort(rand(n) .* 10.0)
+    groups = [isodd(i) ? :A : :B for i in 1:n]
+
+    y = Vector{Float64}(undef, n)
+    for i in 1:n
+        if groups[i] == :A
+            y[i] = 1.0 + 2.0 * x[i] + randn() * 0.1
+        else
+            y[i] = -0.5 + 1.5 * x[i] + randn() * 0.1
+        end
+    end
+
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, left=0.0, right=10.0,
+                                       coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+
+    @test fitter.times_through == 1
+    @test haskey(fitter.coefficients, :A)
+    @test haskey(fitter.coefficients, :B)
+
+    # Both groups should produce reasonable predictions
+    @test isfinite(fitter(5.0, :A))
+    @test isfinite(fitter(5.0, :B))
+
+    # Group A should predict higher than Group B at the same x (since a_A > a_B and b_A > b_B)
+    @test fitter(5.0, :A) > fitter(5.0, :B)
+
+    # Coefficients should differ between groups
+    a_A, b_A = fitter.coefficients[:A]
+    a_B, b_B = fitter.coefficients[:B]
+    @test !(a_A ≈ a_B && b_A ≈ b_B)
+end
+
+@testset "UnivariateAdjustedFitter New Group Onboarding" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(55)
+    n = 100
+    x = sort(rand(n) .* 10.0)
+    y = 2.0 .* x .+ randn(n) .* 0.1
+
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, left=0.0, right=10.0,
+                                       coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+
+    # First fit with group A
+    UnivariateFunctions.fit!(fitter, x, y, fill(:A, n))
+    @test haskey(fitter.coefficients, :A)
+    @test !haskey(fitter.coefficients, :B)
+
+    # Second fit introduces group B
+    y2 = 3.0 .* x .+ randn(n) .* 0.1
+    UnivariateFunctions.fit!(fitter, x, y2, fill(:B, n))
+    @test haskey(fitter.coefficients, :B)
+    @test fitter.times_through == 2
+
+    # Group A coefficients should still exist (unchanged since not in second batch)
+    @test haskey(fitter.coefficients, :A)
+end
+
+@testset "UnivariateAdjustedFitter Coefficient Bounds Clamping" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(42)
+    n = 100
+    x = sort(rand(n) .* 10.0)
+    # Very large intercept and slope — should get clamped
+    y = 100.0 .+ 50.0 .* x .+ randn(n) .* 0.1
+    groups = fill(:A, n)
+
+    # Tight bounds
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, left=0.0, right=10.0,
+                                       coefficient_bounds=((-2.0, 2.0), (0.5, 3.0)))
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+
+    a_A, b_A = fitter.coefficients[:A]
+    @test a_A >= -2.0
+    @test a_A <= 2.0
+    @test b_A >= 0.5
+    @test b_A <= 3.0
+end
+
+@testset "UnivariateAdjustedFitter Iterative Blending" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(33)
+    n = 200
+    x = sort(rand(n) .* 10.0)
+    y = 2.0 .* x .+ randn(n) .* 0.1
+    groups = fill(:A, n)
+
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, weight_on_new=0.7,
+                                       left=0.0, right=10.0,
+                                       coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+    val_after_first = fitter(5.0, :A)
+    coeffs_after_first = fitter.coefficients[:A]
+
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+    val_after_second = fitter(5.0, :A)
+    coeffs_after_second = fitter.coefficients[:A]
+
+    @test fitter.times_through == 2
+    # Values should be close since data is the same
+    @test abs(val_after_second - val_after_first) < 5.0
+    # Coefficients should have been blended
+    @test coeffs_after_second != coeffs_after_first || val_after_second != val_after_first
+end
+
+@testset "UnivariateAdjustedFitter Simplification" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(11)
+    n = 200
+    x = sort(rand(n) .* 10.0)
+    y = 2.0 .* x .+ randn(n) .* 0.1
+    groups = fill(:A, n)
+
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, weight_on_new=1.0,
+                                       simplification_frequency=2, left=0.0, right=10.0,
+                                       min_bins_for_simplification=25,
+                                       coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+
+    # First fit: times_through=0 before check, 0%2==0 but guard requires times_through > 0
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+    @test fitter.times_through == 1
+    @test fitter.fun isa UnivariateFunction
+
+    # Second fit: times_through=1 before check, 1%2!=0 so no simplification
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+    @test fitter.times_through == 2
+
+    # Third fit: times_through=2 before check, 2%2==0 and times_through>0 — simplification fires
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+    @test fitter.times_through == 3
+    @test fitter.fun isa UnivariateFunction
+    # Function should still produce reasonable results after simplification
+    @test isfinite(fitter(5.0, :A))
+end
+
+@testset "UnivariateAdjustedFitter adjust_for_groups=false" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(22)
+    n = 100
+    x = sort(rand(n) .* 10.0)
+    y = 2.0 .* x .+ 1.0 .+ randn(n) .* 0.1
+    groups = fill(:A, n)
+
+    # With adjust_for_groups=false, y is passed to shape fitter directly
+    fitter = UnivariateAdjustedFitter(:increasing; nbins=15, left=0.0, right=10.0,
+                                       adjust_for_groups=false,
+                                       coefficient_bounds=((-5.0, 5.0), (0.1, 5.0)))
+    UnivariateFunctions.fit!(fitter, x, y, groups)
+
+    @test fitter.times_through == 1
+    @test isfinite(fitter(5.0, :A))
+
+    # Coefficients should still be estimated even when adjust_for_groups=false
+    a_A, b_A = fitter.coefficients[:A]
+    @test isfinite(a_A) && isfinite(b_A)
+end
+
+@testset "UnivariateAdjustedFitter All Methods" begin
+    using UnivariateFunctions
+    using Random
+
+    Random.seed!(88)
+    n = 100
+    x = sort(rand(n) .* 10.0)
+    groups = fill(:A, n)
+
+    for method in [:increasing, :decreasing, :convex, :concave, :quasiconvex, :quasiconcave, :supersmoother]
+        y = if method in [:increasing, :quasiconvex]
+            2.0 .* x .+ randn(n) .* 0.1
+        elseif method in [:decreasing, :quasiconcave]
+            -2.0 .* x .+ randn(n) .* 0.1
+        elseif method == :convex
+            (x .- 5.0).^2 .+ randn(n) .* 0.1
+        elseif method == :concave
+            -(x .- 5.0).^2 .+ randn(n) .* 0.1
+        else  # supersmoother
+            sin.(x) .+ randn(n) .* 0.05
+        end
+
+        fitter = UnivariateAdjustedFitter(method; nbins=15, left=0.0, right=10.0,
+                                           coefficient_bounds=((-50.0, 50.0), (0.1, 10.0)))
+        UnivariateFunctions.fit!(fitter, x, y, groups)
+        @test fitter.times_through == 1
+        @test fitter.fun isa UnivariateFunction
+        @test isfinite(fitter(5.0, :A))
+    end
+
+    # Unknown method should error
+    fitter_bad = UnivariateAdjustedFitter(:nonexistent; left=0.0, right=10.0)
+    @test_throws ErrorException UnivariateFunctions.fit!(fitter_bad, x, 2.0 .* x, groups)
+end
